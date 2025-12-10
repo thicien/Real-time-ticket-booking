@@ -8,7 +8,7 @@ class Bus {
     private $schedules_table = "schedules";
     private $buses_table = "buses"; 
     
-    // NEW: Define table names for booking logic
+    // Define table names for booking logic
     private $bookings_table = "bookings";
     private $booking_seats_table = "booking_seats";
 
@@ -33,8 +33,8 @@ class Bus {
                 s.schedule_id,
                 r.route_name,
                 r.route_id,
-                r.departure_location,  -- Added to ensure route context is complete
-                r.destination_location, -- Added to ensure route context is complete
+                r.departure_location,
+                r.destination_location,
                 b.bus_operator,
                 b.bus_type,
                 b.amenities,
@@ -208,7 +208,37 @@ class Bus {
         }
     }
 
-    // --- NEW METHOD for Confirmation Page (Used by confirmation.php) ---
+    // --- NEW METHOD for SMS Notification (Used by payment.php) ---
+
+    /**
+     * Fetches user details including the phone number.
+     * * @param int $userId
+     * @return array|false User details or false if not found.
+     */
+    public function getUserDetails($userId) {
+        $users_table = "users"; // Assuming your users table is named 'users'
+        $query = "
+            SELECT
+                user_id,
+                name,
+                phone_number
+            FROM
+                " . $users_table . "
+            WHERE
+                user_id = :user_id
+            LIMIT 0,1";
+        
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch(PDOException $e) {
+            return false;
+        }
+    }
+
+    // --- METHOD for Confirmation Page (Used by confirmation.php) ---
 
     /**
      * Fetches all details for a confirmed booking, including associated seats.

@@ -4,13 +4,17 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Authorization Check
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'user') {
-    header("Location: login.php");
-    exit;
-}
+// Security Constant: This token secures the public QR link view.
+// !!! IMPORTANT: CHANGE THIS TO A LONG, COMPLEX STRING !!!
+const TICKET_VIEW_SECRET = 'your_long_and_secret_token_to_verify_qr_view'; 
 
-// 2. Include Controller/Model (We'll use a new method for fetching booking details)
+// --- FIX FOR LOCAL TESTING ---
+// 1. HARDCODED IP ADDRESS for QR Code generation (as requested).
+// This is your computer's local IP address, which your phone uses to access XAMPP.
+const LOCAL_HOST_IP = '192.168.137.1'; 
+
+
+// 2. Include Controller/Model 
 require_once 'models/Bus.php';
 $busModel = new Bus();
 
@@ -21,27 +25,73 @@ $booking_id = $_GET['booking_id'] ?? null;
 $booking_details = null;
 $error_message = '';
 
+// --- NEW AUTHORIZATION LOGIC ---
+
+// Check for QR token in the URL
+$qr_token = $_GET['token'] ?? '';
+
+// Determines if the user is attempting to view the ticket via the public QR link
+$is_qr_view = (is_numeric($booking_id) && $qr_token === TICKET_VIEW_SECRET);
+
+// 1. Authorization Check
+// If the user is NOT logged in AND they are NOT using the secure QR link, redirect to login.
+if ((!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'user') && !$is_qr_view) {
+    header("Location: login.php");
+    exit;
+}
+
+// --- END NEW AUTHORIZATION LOGIC ---
+
+
+// Function to generate a simple reference/QR data
+function generate_ticket_reference($booking_id) {
+    // A simple, unique reference number for display purposes
+    return 'BBK-' . date('Ymd') . '-' . str_pad($booking_id, 5, '0', STR_PAD_LEFT);
+}
+
+
 // 3. Fetch Booking Details
 if (is_numeric($booking_id)) {
-    // You will need to add a getBookingDetails method to your Bus Model!
-    $booking_details = $busModel->getBookingDetails((int)$booking_id);
+    // getBookingDetails MUST exist in Bus Model and return booking data + trip data + seats array
+    $booking_details = $busModel->getBookingDetails((int)$booking_id); 
 
-    if (!$booking_details || $booking_details['user_id'] != $_SESSION['user_id']) {
-        // Prevent users from viewing other people's tickets
-        $error_message = "Booking not found or you do not have permission to view this ticket.";
+    // Additional security check: If logged in, ensure the ticket belongs to the user.
+    if (!$booking_details || (isset($_SESSION['user_id']) && $booking_details['user_id'] != $_SESSION['user_id'] && !$is_qr_view)) {
+        $error_message = "Booking not found or access denied.";
     }
 } else {
     $error_message = "Invalid booking reference.";
 }
 
-// Function to generate a simple reference/QR data
-function generate_ticket_reference($booking_id) {
-    // A simple, unique reference number
-    return 'BBK-' . date('Ymd') . '-' . str_pad($booking_id, 5, '0', STR_PAD_LEFT);
+// 4. Prepare Data for Display and QR Code
+$ticket_reference = '';
+$qr_code_data_string = 'ERROR: No Booking Data'; 
+
+if ($booking_details) {
+    // 4a. Human-readable reference for display
+    $ticket_reference = generate_ticket_reference($booking_details['booking_id']);
+    
+    // --- START QR CODE URL CONSTRUCTION (THE FIX) ---
+    
+    // 4b. Machine-readable, unique URL for QR code
+    
+    // Use the hardcoded IP for mobile access
+    $host = LOCAL_HOST_IP; 
+    $protocol = "http://"; // Assuming XAMPP is running on HTTP
+    
+    // Get the base path (e.g., /Online-ticket-booking)
+    $path = dirname($_SERVER['PHP_SELF']);
+    // Clean up path for the file (e.g., /Online-ticket-booking/confirmation.php)
+    $path = rtrim($path, '/') . '/confirmation.php'; 
+
+    // The link includes the booking_id and the TICKET_VIEW_SECRET for public access
+    $qr_code_data_string = $protocol . $host . $path . '?booking_id=' . $booking_details['booking_id'] . '&token=' . TICKET_VIEW_SECRET;
+    
+    // --- END QR CODE URL CONSTRUCTION ---
 }
 
-// Generate the reference if details are available
-$ticket_reference = $booking_details ? generate_ticket_reference($booking_details['booking_id']) : '';
+// Use json_encode for safe transfer of the QR string to JavaScript
+$js_qr_code_data = json_encode($qr_code_data_string);
 
 ?>
 
@@ -95,7 +145,7 @@ $ticket_reference = $booking_details ? generate_ticket_reference($booking_detail
                         </div>
                         <div class="col-span-1">
                             <p class="text-sm text-gray-500">PASSENGER</p>
-                            <p class="text-xl font-semibold text-gray-800"><?php echo htmlspecialchars($_SESSION['name']); ?></p>
+                            <p class="text-xl font-semibold text-gray-800"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Guest'); ?></p>
                         </div>
                         <div class="col-span-1">
                             <p class="text-sm text-gray-500">AMOUNT PAID</p>
@@ -115,14 +165,8 @@ $ticket_reference = $booking_details ? generate_ticket_reference($booking_detail
                         </div>
 
                         <div class="flex flex-col items-center md:items-start">
-                            <h3 class="text-xl font-bold text-gray-800 mb-3">YOUR SEATS</h3>
-                            <div class="flex flex-wrap gap-2 mb-4">
-                                <?php foreach ($booking_details['seats'] as $seat): ?>
-                                    <span class="bg-primary-indigo text-white text-lg font-bold px-4 py-2 rounded-lg shadow-md"><?php echo htmlspecialchars($seat['seat_number']); ?></span>
-                                <?php endforeach; ?>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-800 mt-4 mb-3">TICKET QR CODE</h3>
+                            <h3 class="text-xl font-bold text-gray-800 mb-3">TICKET QR CODE</h3>
+                            <p class="text-sm text-gray-500 mb-2">Scan to open ticket link.</p>
                             <canvas id="qrcode-canvas" class="p-2 border border-gray-300 rounded-lg bg-white"></canvas>
                         </div>
                     </div>
@@ -140,15 +184,21 @@ $ticket_reference = $booking_details ? generate_ticket_reference($booking_detail
 
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    const ticketReference = "<?php echo $ticket_reference; ?>";
+                    const qrCodeData = <?php echo $js_qr_code_data; ?>;
                     const canvas = document.getElementById('qrcode-canvas');
                     
-                    if (canvas && ticketReference) {
+                    if (canvas && qrCodeData && qrCodeData.startsWith('http')) {
                         new QRious({
                             element: canvas,
-                            value: 'BUSBOOK_TICKET:' + ticketReference, // Unique string for verification
-                            size: 150
+                            value: qrCodeData, 
+                            size: 150 
                         });
+                        console.log('QR Code generated successfully with URL:', qrCodeData);
+                    } else {
+                        console.error('QR Code generation failed. Missing or invalid URL data:', qrCodeData);
+                        const ctx = canvas.getContext('2d');
+                        ctx.font = '10px Arial';
+                        ctx.fillText('QR Link Failed', 10, 75);
                     }
                 });
             </script>

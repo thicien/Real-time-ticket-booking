@@ -10,9 +10,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit;
 }
 
-// 2. Include Controller
+// 2. Include Controller, Model, and Service
 require_once 'controllers/BusController.php';
 require_once 'models/Bus.php'; 
+require_once 'services/SmsService.php'; // Included for SMS notification
 
 $user_id = $_SESSION['user_id']; // Assuming user_id is stored in the session
 $user_name = htmlspecialchars($_SESSION['name']);
@@ -20,11 +21,10 @@ $error_message = '';
 $booking_data = [];
 
 // Currency Constant
-// We use a constant for the currency prefix to easily change it in the future
 const CURRENCY_SYMBOL = 'RWF ';
 
-// 3. Process POST data from seat_selection.php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+// 3. Process POST data from seat_selection.php (Initial load/display)
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['finalize_payment'])) {
     $schedule_id = $_POST['schedule_id'] ?? null;
     $price_per_seat = $_POST['price'] ?? null;
     $selected_seats_str = $_POST['selected_seats'] ?? '';
@@ -40,7 +40,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         // Fetch trip details for display
         $busController = new BusController();
-        $trip = $busController->getScheduleDetailsWithSeats((int)$schedule_id);
+        // Assuming getScheduleDetailsWithSeats exists in BusController 
+        // and returns schedule details joined with bus info (rows/columns/etc.)
+        $trip = $busController->getScheduleDetailsWithSeats((int)$schedule_id); 
 
         if (!$trip) {
             $error_message = "Trip not found.";
@@ -55,36 +57,84 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ];
         }
     }
-} else {
-    $error_message = "Access denied. Start booking from the search page.";
 }
 
-// --- Payment and Booking Submission Handler ---
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['finalize_payment']) && empty($error_message)) {
-    // 1. Re-validate and sanitize data
+// --- Payment and Booking Submission Handler (Final submission) ---
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['finalize_payment'])) {
+    // 1. Re-validate and sanitize data from hidden fields
     $schedule_id = (int)($_POST['schedule_id'] ?? 0);
     $total_amount = (float)($_POST['total_amount'] ?? 0);
     $selected_seats = array_filter(explode(',', $_POST['selected_seats'] ?? ''));
     $payment_method = $_POST['payment_method'] ?? '';
+    
+    // Quick validation before proceeding
+    if ($schedule_id === 0 || $total_amount === 0 || empty($selected_seats)) {
+        $error_message = "Missing critical booking data. Cannot finalize payment.";
+    }
+
+    // Generate a temporary reference (used for SMS/email)
+    $temp_reference = 'BBK-' . date('YmdHi') . '-' . substr(md5(mt_rand()), 0, 4);
 
     // 2. Perform payment simulation (Placeholder)
-    $payment_success = true; // Assume success for now
+    $payment_success = true; // Assume success for now based on payment method selection
 
-    if ($payment_success) {
+    if ($payment_success && empty($error_message)) {
         
-        // 3. Finalize Booking in Database (Uses the createBooking method we updated in Bus.php)
+        // 3. Finalize Booking in Database
         $busModel = new Bus();
         $booking_id = $busModel->createBooking($user_id, $schedule_id, $total_amount, $selected_seats);
 
         if ($booking_id) {
+            
+            // --- SMS Notification Logic ---
+            $user_details = $busModel->getUserDetails($user_id);
+            $trip_details = $busModel->getScheduleDetails($schedule_id); // Fetch basic trip details
+            
+            if ($user_details && $trip_details) {
+                $phone_number = $user_details['phone_number'] ?? null;
+                
+                if ($phone_number) {
+                    $seats_str = implode(',', $selected_seats);
+
+                    $sms_message = sprintf(
+                        "BusBook Confirmed: Ref %s. %s to %s, %s at %s. Seats: %s. Total: %s%s. Enjoy your trip!",
+                        $temp_reference,
+                        $trip_details['departure_location'],
+                        $trip_details['destination_location'],
+                        date('M j', strtotime($trip_details['departure_time'])),
+                        date('H:i', strtotime($trip_details['departure_time'])),
+                        $seats_str,
+                        CURRENCY_SYMBOL,
+                        number_format($total_amount, 0)
+                    );
+                    
+                    // Send the simulated SMS
+                    SmsService::sendSms($phone_number, $sms_message);
+                }
+            }
+            // --- END SMS LOGIC ---
+
             // 4. Redirect to Confirmation/Ticket Page
             header("Location: confirmation.php?booking_id=" . $booking_id);
             exit;
         } else {
             $error_message = "Payment successful, but failed to record booking. Please contact support.";
         }
-    } else {
+    } else if (!$payment_success) {
         $error_message = "Payment failed. Please try a different method or check your details.";
+    }
+    
+    // If the final payment failed, we re-fetch data for display
+    if (!empty($error_message)) {
+        $busController = new BusController();
+        $trip = $busController->getScheduleDetailsWithSeats($schedule_id);
+        $booking_data = [
+            'schedule_id' => $schedule_id,
+            'trip' => $trip,
+            'selected_seats' => $selected_seats,
+            'price_per_seat' => $trip['price'],
+            'total_amount' => $total_amount,
+        ];
     }
 }
 
