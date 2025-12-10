@@ -4,18 +4,18 @@
 // Include the User model to interact with the database tables
 require_once __DIR__ . '/../models/User.php';
 // Include the new Admin model
-require_once __DIR__ . '/../models/Admin.php'; // NEW
+require_once __DIR__ . '/../models/Admin.php';
 
 class AuthController {
     private $userModel;
-    private $adminModel; // NEW
+    private $adminModel; 
 
     /**
      * Constructor - initialize the User and Admin models
      */
     public function __construct() {
         $this->userModel = new User();
-        $this->adminModel = new Admin(); // NEW
+        $this->adminModel = new Admin(); 
     }
 
     /**
@@ -36,11 +36,12 @@ class AuthController {
         
         // 1. Find the user record based on login type
         if ($loginType === 'admin') {
-            // Use the dedicated Admin model for admin lookups
-            $record = $this->adminModel->findAdminByEmail($email); // UPDATED CALL
+            // Use the dedicated Admin model's method
+            $record = $this->adminModel->findAdminByEmail($email);
             $id_field = 'admin_id';
             $redirect_path = 'admin_dashboard.php';
         } else { // Default to user (passenger) login
+            // Use the User model's method
             $record = $this->userModel->findUserByEmail($email);
             $id_field = 'user_id';
             $redirect_path = 'user_dashboard.php';
@@ -52,6 +53,7 @@ class AuthController {
         }
 
         // 3. Verify the password hash
+        // We rely on findAdminByEmail and findUserByEmail to return the column as 'password_hash'
         $password_hash = $record['password_hash'];
 
         if (password_verify($password, $password_hash)) {
@@ -65,16 +67,19 @@ class AuthController {
             // Store necessary data in the session
             $_SESSION['logged_in'] = true;
             $_SESSION['user_type'] = $loginType;
-            $_SESSION['user_id'] = $record[$id_field]; // Use user_id for passenger, admin_id for admin
+            // Use the appropriate ID field for the session
+            $_SESSION['user_id'] = $record[$id_field]; 
             
-            // Store a friendly name for display
+            // 5. Store a friendly name for display
             if ($loginType === 'admin') {
+                // IMPORTANT: Use 'full_name' to match your 'admins' table column
                 $_SESSION['name'] = $record['full_name'];
             } else {
+                // Assuming passenger user model returns first_name and last_name
                 $_SESSION['name'] = $record['first_name'] . ' ' . $record['last_name'];
             }
 
-            // 5. Redirect the user
+            // 6. Redirect the user
             header("Location: " . $redirect_path);
             exit();
 
