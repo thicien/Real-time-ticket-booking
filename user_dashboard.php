@@ -14,7 +14,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 $user_name = htmlspecialchars($_SESSION['name']);
 
 // NOTE: No POST handling is needed here. The form now submits directly to search_results.php via GET.
-// The search form handling logic has been moved entirely to search_results.php
 ?>
 
 <!DOCTYPE html>

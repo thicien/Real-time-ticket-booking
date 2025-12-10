@@ -1,45 +1,47 @@
 <?php
-// Include the Bus Model (which we will create right after this)
-require_once __DIR__ . '/../models/Bus.php';
+require_once 'models/Bus.php';
 
 class BusController {
     private $busModel;
 
-    /**
-     * Constructor - initializes the Bus Model
-     */
     public function __construct() {
         $this->busModel = new Bus();
     }
 
-    /**
-     * Handles the search request from the user dashboard.
-     * * @param string $departure Departure city
-     * @param string $destination Destination city
-     * @param string $date Date of travel
-     * @return array|false Array of matching bus schedules or false if error/no results.
-     */
-    public function getSearchResults($departure, $destination, $date) {
-        // --- Basic Validation ---
-        if (empty($departure) || empty($destination) || empty($date)) {
-            // In a real app, this should throw an exception or return an error flag
-            return false; 
+    // Existing method to display search results
+    public function getSearchResults($from, $to, $date) {
+        if (empty($from) || empty($to) || empty($date)) {
+            return false;
         }
-        
-        // --- Sanitization and Trimming ---
-        $departure = trim(htmlspecialchars(strip_tags($departure)));
-        $destination = trim(htmlspecialchars(strip_tags($destination)));
-        $date = trim(htmlspecialchars(strip_tags($date)));
-        
-        // --- Call Model to Fetch Data ---
-        $results = $this->busModel->searchRoutes($departure, $destination, $date);
-        
-        // If results are found, you could add sorting/filtering logic here later.
-        return $results;
+        return $this->busModel->searchRoutes($from, $to, $date);
     }
     
-    // Future methods will include:
-    // public function getSeatAvailability($scheduleId) { ... }
-    // public function processBooking($data) { ... }
+    // THE MISSING METHOD CAUSING THE ERROR
+    /**
+     * Fetches detailed information for a specific trip, including seat availability.
+     * * @param int $scheduleId The ID of the specific bus schedule.
+     * @return array|false An array containing bus details and seat data, or false on error.
+     */
+    public function getScheduleDetailsWithSeats($scheduleId) {
+        if (!is_numeric($scheduleId) || $scheduleId <= 0) {
+            return false;
+        }
+
+        // Fetch the trip details (bus type, total seats, price, etc.)
+        $details = $this->busModel->getScheduleDetails($scheduleId);
+        
+        if (!$details) {
+            return false;
+        }
+
+        // Fetch the list of already booked seats for this schedule
+        $bookedSeats = $this->busModel->getBookedSeats($scheduleId);
+
+        // Calculate available seats (simple subtraction for now)
+        $details['available_seats'] = $details['total_seats'] - count($bookedSeats);
+        $details['booked_seats'] = $bookedSeats;
+
+        return $details;
+    }
 }
 ?>
