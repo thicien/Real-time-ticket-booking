@@ -1,8 +1,9 @@
-<footer class="bg-white mt-20 py-6 shadow-inner">
-    <div class="max-w-6xl mx-auto px-6 text-center text-gray-600">
-        © <?php echo date('Y'); ?> BusBooking. All rights reserved.
+<footer class="bg-blue-600 text-white py-6 mt-16">
+    <div class="max-w-6xl mx-auto text-center">
+        <p>&copy; <?php echo date('Y'); ?> KigaliBus. All rights reserved.</p>
     </div>
 </footer>
 
 </body>
 </html>
+
