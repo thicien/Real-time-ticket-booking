@@ -11,6 +11,7 @@ class Bus {
     // Define table names for booking logic
     private $bookings_table = "bookings";
     private $booking_seats_table = "booking_seats";
+    private $users_table = "users"; // Added users table reference
 
     /**
      * Constructor - initializes database connection
@@ -22,7 +23,7 @@ class Bus {
 
     /**
      * Searches for available bus schedules based on route and date.
-     * * @param string $departure
+     * @param string $departure
      * @param string $destination
      * @param string $date (format: YYYY-MM-DD)
      * @return array Array of matching schedules.
@@ -67,6 +68,7 @@ class Bus {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
         } catch(PDOException $e) {
+            // Log error: echo "Error: " . $e->getMessage();
             return []; 
         }
     }
@@ -75,7 +77,7 @@ class Bus {
 
     /**
      * Fetches the detailed information for a single schedule ID.
-     * * @param int $scheduleId
+     * @param int $scheduleId
      * @return array|false The schedule details or false if not found.
      */
     public function getScheduleDetails($scheduleId) {
@@ -92,8 +94,8 @@ class Bus {
                 s.arrival_time,
                 s.price,
                 b.total_seats,
-                b.rows,      
-                b.columns    
+                b.rows, 	 
+                b.columns 	 
             FROM
                 " . $this->schedules_table . " s
             JOIN
@@ -110,13 +112,14 @@ class Bus {
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
+            // Log error: echo "Error: " . $e->getMessage();
             return false;
         }
     }
 
     /**
      * Gets a list of seat numbers that have been booked for a specific schedule.
-     * * @param int $scheduleId
+     * @param int $scheduleId
      * @return array List of booked seat numbers (e.g., ['A1', 'B2', 'C1'])
      */
     public function getBookedSeats($scheduleId) {
@@ -140,7 +143,7 @@ class Bus {
             return $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 
         } catch(PDOException $e) {
-            // Handle cases where booking tables might not exist yet
+            // Log error: echo "Error: " . $e->getMessage();
             return [];
         }
     }
@@ -149,7 +152,7 @@ class Bus {
     
     /**
      * Creates a new booking and records the selected seats in the database.
-     * * @param int $userId
+     * @param int $userId
      * @param int $scheduleId
      * @param float $totalAmount
      * @param array $seats Array of seat numbers (e.g., ['B1', 'B2'])
@@ -203,7 +206,7 @@ class Bus {
             if ($this->conn->inTransaction()) {
                 $this->conn->rollBack();
             }
-            // In a real app, you would log $e->getMessage() for debugging.
+            // Log error: echo "Error: " . $e->getMessage();
             return false;
         }
     }
@@ -212,18 +215,17 @@ class Bus {
 
     /**
      * Fetches user details including the phone number.
-     * * @param int $userId
+     * @param int $userId
      * @return array|false User details or false if not found.
      */
     public function getUserDetails($userId) {
-        $users_table = "users"; // Assuming your users table is named 'users'
         $query = "
             SELECT
                 user_id,
                 name,
                 phone_number
             FROM
-                " . $users_table . "
+                " . $this->users_table . "
             WHERE
                 user_id = :user_id
             LIMIT 0,1";
@@ -234,6 +236,7 @@ class Bus {
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
+            // Log error: echo "Error: " . $e->getMessage();
             return false;
         }
     }
@@ -242,7 +245,7 @@ class Bus {
 
     /**
      * Fetches all details for a confirmed booking, including associated seats.
-     * * @param int $bookingId
+     * @param int $bookingId
      * @return array|false Complete booking details or false if not found.
      */
     public function getBookingDetails($bookingId) {
@@ -301,8 +304,52 @@ class Bus {
             return $booking;
 
         } catch(PDOException $e) {
-            // Log error
+            // Log error: echo "Error: " . $e->getMessage();
             return false;
+        }
+    }
+
+    // --- METHOD FOR USER DASHBOARD (THE FIX FOR THE FATAL ERROR) ---
+
+    /**
+     * Fetches the detailed booking history for a given user.
+     * @param int $userId The ID of the currently logged-in user.
+     * @return array An array of booking records.
+     */
+    public function getBookingHistory($userId) {
+        $query = "
+            SELECT
+                b.booking_id,
+                b.total_amount,
+                b.status,
+                s.departure_time,
+                r.departure_location,
+                r.destination_location,
+                bus.bus_operator,
+                (SELECT COUNT(bs.id) FROM " . $this->booking_seats_table . " bs WHERE bs.booking_id = b.booking_id) AS seat_count
+            FROM
+                " . $this->bookings_table . " b
+            JOIN
+                " . $this->schedules_table . " s ON b.schedule_id = s.schedule_id
+            JOIN
+                " . $this->routes_table . " r ON s.route_id = r.route_id
+            JOIN
+                " . $this->buses_table . " bus ON s.bus_id = bus.bus_id
+            WHERE
+                b.user_id = :user_id
+            ORDER BY
+                s.departure_time DESC
+        ";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch(PDOException $e) {
+            // Log error: echo "Error: " . $e->getMessage();
+            return [];
         }
     }
 }

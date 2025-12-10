@@ -1,20 +1,26 @@
 <?php
+// controllers/AuthController.php
+
 // Include the User model to interact with the database tables
 require_once __DIR__ . '/../models/User.php';
+// Include the new Admin model
+require_once __DIR__ . '/../models/Admin.php'; // NEW
 
 class AuthController {
     private $userModel;
+    private $adminModel; // NEW
 
     /**
-     * Constructor - initialize the User model
+     * Constructor - initialize the User and Admin models
      */
     public function __construct() {
         $this->userModel = new User();
+        $this->adminModel = new Admin(); // NEW
     }
 
     /**
      * Handles the login process for both users (passengers) and admins.
-     * * @param string $loginType 'user' or 'admin'
+     * @param string $loginType 'user' or 'admin'
      * @param string $email The submitted email
      * @param string $password The submitted plain text password
      * @return array Contains 'success' (bool) and 'message' (string) on failure (redirects on success)
@@ -30,7 +36,8 @@ class AuthController {
         
         // 1. Find the user record based on login type
         if ($loginType === 'admin') {
-            $record = $this->userModel->findAdminByEmail($email);
+            // Use the dedicated Admin model for admin lookups
+            $record = $this->adminModel->findAdminByEmail($email); // UPDATED CALL
             $id_field = 'admin_id';
             $redirect_path = 'admin_dashboard.php';
         } else { // Default to user (passenger) login
@@ -58,7 +65,7 @@ class AuthController {
             // Store necessary data in the session
             $_SESSION['logged_in'] = true;
             $_SESSION['user_type'] = $loginType;
-            $_SESSION['user_id'] = $record[$id_field];
+            $_SESSION['user_id'] = $record[$id_field]; // Use user_id for passenger, admin_id for admin
             
             // Store a friendly name for display
             if ($loginType === 'admin') {
@@ -79,7 +86,7 @@ class AuthController {
 
     /**
      * Handles the user (passenger) registration process.
-     * * @param array $data Contains form inputs (name, email, password, etc.)
+     * @param array $data Contains form inputs (name, email, password, etc.)
      * @return array Contains 'success' (bool) and 'message' (string) on failure (redirects on success)
      */
     public function register($data) {
