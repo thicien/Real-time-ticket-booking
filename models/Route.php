@@ -1,5 +1,5 @@
 <?php
-// models/Route.php
+// models/Route.php - CORRECTED WITH ERROR LOGGING
 
 require_once __DIR__ . '/../config/Database.php';
 
@@ -26,7 +26,7 @@ class Route {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            // error_log("Route Read All Error: " . $e->getMessage());
+            error_log("Route Read All Error: " . $e->getMessage()); // Log error
             return [];
         }
     }
@@ -38,8 +38,8 @@ class Route {
      */
     public function create($data) {
         $query = "INSERT INTO " . $this->table . " 
-                  (route_name, departure_location, destination_location, fare_base) 
-                  VALUES (:route_name, :dep_loc, :dest_loc, :fare)";
+                     (route_name, departure_location, destination_location, fare_base) 
+                     VALUES (:route_name, :dep_loc, :dest_loc, :fare)";
         
         try {
             $stmt = $this->conn->prepare($query);
@@ -47,14 +47,13 @@ class Route {
             $stmt->bindParam(':route_name', $data['route_name']);
             $stmt->bindParam(':dep_loc', $data['departure_location']);
             $stmt->bindParam(':dest_loc', $data['destination_location']);
-            $stmt->bindParam(':fare', $data['fare_base']);
+            // Ensure fare is treated as a float/decimal in DB
+            $stmt->bindParam(':fare', $data['fare_base']); 
 
             return $stmt->execute();
         } catch (PDOException $e) {
-            // Check for duplicate entry error (if route_name is unique)
-            if ($e->getCode() === '23000') {
-                return false; 
-            }
+            // CRUCIAL: Log the specific error to the server log
+            error_log("Route Create Error (Code: {$e->getCode()}): " . $e->getMessage()); 
             return false;
         }
     }
@@ -73,6 +72,7 @@ class Route {
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
+            error_log("Route Read One Error: " . $e->getMessage());
             return false;
         }
     }
@@ -84,11 +84,11 @@ class Route {
      */
     public function update($data) {
         $query = "UPDATE " . $this->table . "
-                  SET route_name = :route_name,
-                      departure_location = :dep_loc,
-                      destination_location = :dest_loc,
-                      fare_base = :fare
-                  WHERE route_id = :route_id";
+                     SET route_name = :route_name,
+                         departure_location = :dep_loc,
+                         destination_location = :dest_loc,
+                         fare_base = :fare
+                     WHERE route_id = :route_id";
         
         try {
             $stmt = $this->conn->prepare($query);
@@ -101,6 +101,7 @@ class Route {
 
             return $stmt->execute();
         } catch (PDOException $e) {
+            error_log("Route Update Error: " . $e->getMessage());
             return false;
         }
     }
@@ -118,7 +119,7 @@ class Route {
             $stmt->bindParam(':route_id', $id, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $e) {
-            // Failure usually means the route is referenced by a schedule (Foreign Key constraint)
+             error_log("Route Delete Error: " . $e->getMessage());
             return false; 
         }
     }

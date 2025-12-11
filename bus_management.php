@@ -30,6 +30,9 @@ $bus_id = $_GET['id'] ?? null;
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     
+    // NOTE: The BusController::createBus and BusController::updateBus MUST be ready to receive 
+    // the new fields: rows, columns, amenities.
+    
     if ($post_action == 'create') {
         $result = $busController->createBus($_POST);
     } elseif ($post_action == 'update') {
@@ -61,6 +64,7 @@ if (isset($_GET['msg']) && isset($_GET['type'])) {
 // Check for Edit Mode
 if ($action == 'edit' && $bus_id) {
     // This calls the getBusById method we added to BusController
+    // NOTE: For edit mode to work, the BusController must fetch ALL columns: bus_plate, total_seats, rows, etc.
     $edit_bus = $busController->getBusById($bus_id); 
     if (!$edit_bus) {
         $message = "Bus record not found.";
@@ -75,7 +79,6 @@ $buses = $busController->index();
 // 6. Define Nav Items for Sidebar (copied from admin_dashboard)
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
 $nav_items = [
-    'Bus Management' => 'bus_management.php',
     'Route Management' => 'route_management.php',
     'Schedule Management' => 'schedule_management.php',
     'Booking Management' => 'booking_management.php',
@@ -114,6 +117,11 @@ $nav_items = [
                         </a>
                     </li>
                 <?php endforeach; ?>
+                 <li>
+                    <a href="bus_management.php" class="flex items-center p-2 rounded-lg bg-indigo-600 font-semibold transition duration-150">
+                        Bus Management
+                    </a>
+                </li>
             </ul>
         </nav>
         <div class="mt-auto pt-4 border-t border-gray-700">
@@ -133,7 +141,7 @@ $nav_items = [
 
         <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">
-                <?php echo $edit_bus ? 'Edit Bus: ' . htmlspecialchars($edit_bus['registration_number']) : 'Add New Bus'; ?>
+                <?php echo $edit_bus ? 'Edit Bus: ' . htmlspecialchars($edit_bus['bus_plate']) : 'Add New Bus'; ?>
             </h2>
             
             <form method="POST" action="bus_management.php" class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -143,42 +151,64 @@ $nav_items = [
                 <?php endif; ?>
 
                 <div>
-                    <label for="registration_number" class="block text-sm font-medium text-gray-700">Registration Number</label>
+                    <label for="registration_number" class="block text-sm font-medium text-gray-700">Bus Plate / Registration No.</label>
                     <input type="text" name="registration_number" id="registration_number" required
-                           value="<?php echo htmlspecialchars($edit_bus['registration_number'] ?? ''); ?>"
+                           value="<?php echo htmlspecialchars($edit_bus['bus_plate'] ?? ''); ?>"
                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 
                 <div>
-                    <label for="capacity" class="block text-sm font-medium text-gray-700">Capacity (Seats)</label>
+                    <label for="capacity" class="block text-sm font-medium text-gray-700">Total Seats (Capacity)</label>
                     <input type="number" name="capacity" id="capacity" required min="1" max="100"
-                           value="<?php echo htmlspecialchars($edit_bus['capacity'] ?? ''); ?>"
+                           value="<?php echo htmlspecialchars($edit_bus['total_seats'] ?? ''); ?>"
                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
 
                 <div>
-                    <label for="model" class="block text-sm font-medium text-gray-700">Model</label>
+                    <label for="model" class="block text-sm font-medium text-gray-700">Bus Type / Model</label>
                     <input type="text" name="model" id="model" required
-                           value="<?php echo htmlspecialchars($edit_bus['model'] ?? ''); ?>"
+                           value="<?php echo htmlspecialchars($edit_bus['bus_type'] ?? ''); ?>"
                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
+                
+                <div>
+                    <label for="operator_name" class="block text-sm font-medium text-gray-700">Operator Name / Company</label>
+                    <input type="text" name="operator_name" id="operator_name" required
+                           value="<?php echo htmlspecialchars($edit_bus['bus_operator'] ?? ''); ?>"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="rows" class="block text-sm font-medium text-gray-700">Seat Rows</label>
+                    <input type="number" name="rows" id="rows" required min="1"
+                           value="<?php echo htmlspecialchars($edit_bus['rows'] ?? '10'); ?>"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label for="columns" class="block text-sm font-medium text-gray-700">Seat Columns</label>
+                    <input type="number" name="columns" id="columns" required min="1"
+                           value="<?php echo htmlspecialchars($edit_bus['columns'] ?? '4'); ?>"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label for="amenities" class="block text-sm font-medium text-gray-700">Amenities (Comma Separated)</label>
+                    <input type="text" name="amenities" id="amenities"
+                           value="<?php echo htmlspecialchars($edit_bus['amenities'] ?? 'AC, WiFi, Charging Ports'); ?>"
+                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., AC, WiFi, Charging Ports">
+                </div>
 
-                <div class="flex items-end">
-                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                <div class="md:col-span-4 flex justify-end space-x-2 mt-2">
+                    <button type="submit" class="w-auto py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
                         <?php echo $edit_bus ? 'bg-orange-500 hover:bg-orange-600' : 'bg-indigo-600 hover:bg-indigo-700'; ?> focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <?php echo $edit_bus ? 'Update Bus' : 'Create Bus'; ?>
                     </button>
                     <?php if ($edit_bus): ?>
-                         <a href="bus_management.php" class="ml-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100">Cancel</a>
+                       <a href="bus_management.php" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100">Cancel</a>
                     <?php endif; ?>
                 </div>
                 
-                <div class="md:col-span-4">
-                    <label for="operator_name" class="block text-sm font-medium text-gray-700">Operator Name / Company</label>
-                    <input type="text" name="operator_name" id="operator_name" required
-                           value="<?php echo htmlspecialchars($edit_bus['operator_name'] ?? ''); ?>"
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
             </form>
         </div>
 
@@ -189,9 +219,9 @@ $nav_items = [
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration No.</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bus Plate</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type / Model</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seats</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operator</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -205,14 +235,14 @@ $nav_items = [
                         <?php foreach ($buses as $bus): ?>
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><?php echo htmlspecialchars($bus['bus_id']); ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['registration_number']); ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['model']); ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['capacity']); ?></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['operator_name']); ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['bus_plate']); ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['bus_type']); ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['total_seats']); ?></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo htmlspecialchars($bus['bus_operator']); ?></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                     <a href="bus_management.php?action=edit&id=<?php echo htmlspecialchars($bus['bus_id']); ?>" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                     
-                                    <form method="POST" action="bus_management.php" class="inline" onsubmit="return confirm('Are you sure you want to delete bus <?php echo htmlspecialchars($bus['registration_number']); ?>? This action cannot be undone.');">
+                                    <form method="POST" action="bus_management.php" class="inline" onsubmit="return confirm('Are you sure you want to delete bus <?php echo htmlspecialchars($bus['bus_plate']); ?>? This action cannot be undone.');">
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="bus_id" value="<?php echo htmlspecialchars($bus['bus_id']); ?>">
                                         <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
@@ -228,9 +258,11 @@ $nav_items = [
     </div>
     
     <script>
-        // Set default capacity if the form is in 'create' mode
+        // Set default capacity/rows/columns if the form is in 'create' mode
         if (!document.getElementById('bus_id')) {
-            document.getElementById('capacity').value = 30;
+            document.getElementById('capacity').value = 40; // Default total seats
+            document.getElementById('rows').value = 10;
+            document.getElementById('columns').value = 4;
         }
     </script>
 </body>

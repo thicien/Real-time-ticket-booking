@@ -1,113 +1,125 @@
 <?php
 // controllers/BusController.php (Admin Management Controller)
-
-// Requires the Admin-facing model for Bus CRUD operations
 require_once __DIR__ . '/../models/BusManagement.php';
 
 class BusController {
     private $busModel;
 
     public function __construct() {
-        // Initializes with the dedicated Admin Bus Management Model
         $this->busModel = new BusManagement();
     }
 
-    /**
-     * Gets all buses for display in the management table. (Used by bus_management.php)
-     * @return array
-     */
+    /** Fetch all buses */
     public function index() {
         return $this->busModel->readAll();
     }
-    
-    /**
-     * Retrieves a single bus by its ID. (Used by bus_management.php for edit mode)
-     * @param int $busId
-     * @return array|false
-     */
+
+    /** Fetch single bus */
     public function getBusById($busId) {
-        if (!is_numeric($busId)) {
-            return false;
-        }
+        if (!is_numeric($busId)) return false;
         return $this->busModel->readOne($busId);
     }
 
-    /**
-     * Validates input data for bus creation/update.
-     * @param array $data
-     * @return string|null Error message or null if validation passes.
-     */
+    /** VALIDATION */
     private function validateBusData($data) {
-        $reg_num = trim($data['registration_number'] ?? '');
-        $capacity = filter_var($data['capacity'] ?? '', FILTER_VALIDATE_INT);
-        $model = trim($data['model'] ?? '');
-        $operator = trim($data['operator_name'] ?? '');
+        $registration = trim($data['registration_number'] ?? '');
+        $capacity     = filter_var($data['capacity'] ?? '', FILTER_VALIDATE_INT);
+        $model        = trim($data['model'] ?? '');
+        $operator     = trim($data['operator_name'] ?? '');
+        $rows         = filter_var($data['rows'] ?? '', FILTER_VALIDATE_INT);
+        $columns      = filter_var($data['columns'] ?? '', FILTER_VALIDATE_INT);
+        $amenities    = trim($data['amenities'] ?? '');
 
-        if (empty($reg_num) || empty($model) || empty($operator)) {
-            return "All fields except Capacity are required.";
+        if ($registration === '' || $model === '' || $operator === '') {
+            return "Registration No., Bus Type, and Operator Name are required.";
         }
-        
-        if ($capacity === false || $capacity <= 0 || $capacity > 100) {
-            return "Capacity must be a number between 1 and 100.";
+
+        if ($capacity === false || $capacity < 1 || $capacity > 100) {
+            return "Total Seats must be a number between 1 and 100.";
         }
-        
-        return null; // Validation successful
+
+        if ($rows === false || $rows < 1 || $columns === false || $columns < 1) {
+            return "Rows and Columns must be valid positive integers.";
+        }
+
+        return null;
     }
 
-    /**
-     * Creates a new bus. (Used by bus_management.php POST handler)
-     * @param array $data POST data.
-     * @return array Response array (success: bool, message: string)
-     */
+    /** CREATE BUS */
     public function createBus($data) {
-        $validation_error = $this->validateBusData($data);
-        if ($validation_error) {
-            return ['success' => false, 'message' => $validation_error];
+        $error = $this->validateBusData($data);
+        if ($error) return ['success' => false, 'message' => $error];
+
+        // Send data using the keys expected by BusManagement::create()
+        $bus_data = [
+            'registration_number' => trim($data['registration_number']),
+            'capacity'            => (int)$data['capacity'],
+            'model'               => trim($data['model']),
+            'operator_name'       => trim($data['operator_name']),
+            'rows'                => (int)$data['rows'],
+            'columns'             => (int)$data['columns'],
+            'amenities'           => trim($data['amenities']),
+        ];
+
+        if ($this->busModel->create($bus_data)) {
+            return [
+                'success' => true,
+                'message' => "Bus '{$bus_data['registration_number']}' added successfully."
+            ];
         }
 
-        if ($this->busModel->create($data)) {
-            return ['success' => true, 'message' => "Bus '{$data['registration_number']}' added successfully."];
-        } else {
-            return ['success' => false, 'message' => "Failed to add bus. The registration number may already exist or there was a database error."];
-        }
+        return [
+            'success' => false,
+            'message' => "Failed to add bus. Plate number might already exist."
+        ];
     }
 
-    /**
-     * Updates an existing bus. (Used by bus_management.php POST handler)
-     * @param array $data POST data including bus_id.
-     * @return array Response array (success: bool, message: string)
-     */
+    /** UPDATE BUS */
     public function updateBus($data) {
-        if (!isset($data['bus_id']) || !is_numeric($data['bus_id'])) {
-            return ['success' => false, 'message' => "Invalid bus ID for update."];
-        }
-        
-        $validation_error = $this->validateBusData($data);
-        if ($validation_error) {
-            return ['success' => false, 'message' => $validation_error];
+        if (!isset($data['bus_id']) || !is_numeric($data['bus_id']))
+            return ['success' => false, 'message' => "Invalid Bus ID."];
+
+        $error = $this->validateBusData($data);
+        if ($error) return ['success' => false, 'message' => $error];
+
+        $bus_data = [
+            'bus_id'             => (int)$data['bus_id'],
+            'registration_number' => trim($data['registration_number']),
+            'capacity'           => (int)$data['capacity'],
+            'model'              => trim($data['model']),
+            'operator_name'      => trim($data['operator_name']),
+            'rows'               => (int)$data['rows'],
+            'columns'            => (int)$data['columns'],
+            'amenities'          => trim($data['amenities']),
+        ];
+
+        if ($this->busModel->update($bus_data)) {
+            return [
+                'success' => true,
+                'message' => "Bus '{$bus_data['registration_number']}' updated successfully."
+            ];
         }
 
-        if ($this->busModel->update($data)) {
-            return ['success' => true, 'message' => "Bus '{$data['registration_number']}' updated successfully."];
-        } else {
-            return ['success' => false, 'message' => "Failed to update bus. Check if the registration number is duplicated."];
-        }
+        return [
+            'success' => false,
+            'message' => "Failed to update bus. Plate number might be duplicated."
+        ];
     }
-    
-    /**
-     * Deletes a bus record. (Used by bus_management.php POST handler)
-     * @param int $busId
-     * @return array Response array (success: bool, message: string)
-     */
+
+    /** DELETE BUS */
     public function deleteBus($busId) {
         if (!is_numeric($busId)) {
-            return ['success' => false, 'message' => "Invalid bus ID."];
+            return ['success' => false, 'message' => "Invalid Bus ID."];
         }
-        
+
         if ($this->busModel->delete($busId)) {
-            return ['success' => true, 'message' => "Bus ID {$busId} deleted successfully."];
-        } else {
-            return ['success' => false, 'message' => "Failed to delete bus. It might be linked to existing schedules."];
+            return ['success' => true, 'message' => "Bus ID $busId deleted successfully."];
         }
+
+        return [
+            'success' => false,
+            'message' => "Failed to delete bus. It may be linked to schedules."
+        ];
     }
 }
+?>

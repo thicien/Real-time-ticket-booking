@@ -69,14 +69,18 @@ class Staff {
      */
     public function create($data) {
         $query = "INSERT INTO " . $this->table . " 
-                  (name, email, phone, password, user_type, employee_id, license_number) 
-                  VALUES (:name, :email, :phone, :password, :user_type, :employee_id, :license_number)";
+                     (name, email, phone, password, user_type, employee_id, license_number) 
+                     VALUES (:name, :email, :phone, :password, :user_type, :employee_id, :license_number)";
         
         try {
             $stmt = $this->conn->prepare($query);
             
             // Hash password before saving
             $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
+            
+            // Ensure license_number is not null if the user is not a driver or if the DB column requires it
+            // Use NULL if the field is empty, which works well if the DB column is NULLable
+            $license_num = empty($data['license_number']) ? null : $data['license_number'];
             
             // Clean and bind parameters
             $stmt->bindParam(':name', $data['name']);
@@ -85,15 +89,19 @@ class Staff {
             $stmt->bindParam(':password', $hashed_password);
             $stmt->bindParam(':user_type', $data['user_type']);
             $stmt->bindParam(':employee_id', $data['employee_id']);
-            $stmt->bindParam(':license_number', $data['license_number']);
+            
+            // Bind license_number. Using PDO::PARAM_STR allows binding null correctly.
+            $stmt->bindParam(':license_number', $license_num); 
 
             return $stmt->execute();
         } catch (PDOException $e) {
-            // error_log("Staff Create Error: " . $e->getMessage());
+            // ------------------------------------------------------------------
+            // **CRUCIAL ADDITION:** Log the specific SQL error for diagnosis
+            // ------------------------------------------------------------------
+            error_log("Staff Create Error (Code: {$e->getCode()}): " . $e->getMessage());
             return false;
         }
     }
-
     /**
      * Updates an existing staff record.
      * @param array $data
