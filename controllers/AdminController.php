@@ -1,5 +1,5 @@
 <?php
-// controllers/AdminController.php (MODIFIED for Plain Text Login)
+// controllers/AdminController.php
 
 require_once __DIR__ . '/../models/Admin.php';
 
@@ -10,6 +10,11 @@ class AdminController {
         $this->adminModel = new Admin();
     }
 
+    /**
+     * Handles the administrator login process.
+     * @param string $email
+     * @param string $password
+     */
     public function handleLogin($email, $password) {
         if (empty($email) || empty($password)) {
             $_SESSION['admin_error'] = "Email and password are required.";
@@ -25,10 +30,9 @@ class AdminController {
             exit();
         }
 
-        // --- INSECURE CHANGE: Using direct string comparison (==) instead of password_verify() ---
-        $stored_password = $record['plain_password']; // Fetched as plain text from DB
+        $password_hash = $record['password_hash'];
 
-        if ($password == $stored_password) {
+        if (password_verify($password, $password_hash)) {
             // Authentication successful!
             if (session_status() == PHP_SESSION_NONE) {
                 session_start();
@@ -36,9 +40,9 @@ class AdminController {
             
             // Set Admin Session Variables
             $_SESSION['logged_in'] = true;
-            $_SESSION['user_type'] = 'admin';
+            $_SESSION['user_type'] = 'admin'; // Crucial for security checks
             $_SESSION['user_id'] = $record['admin_id'];
-            $_SESSION['name'] = $record['full_name'];
+            $_SESSION['name'] = $record['full_name']; // Matches your DB column
 
             header("Location: admin_dashboard.php");
             exit();
