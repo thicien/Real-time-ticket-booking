@@ -1,5 +1,5 @@
 <?php
-// controllers/AdminController.php
+// controllers/AdminController.php (FINAL VERSION FOR TEMPORARY PLAIN-TEXT LOGIN)
 
 require_once __DIR__ . '/../models/Admin.php';
 
@@ -30,9 +30,12 @@ class AdminController {
             exit();
         }
 
-        $password_hash = $record['password_hash'];
+        // --- TEMPORARY INSECURE LOGIN CHECK ---
+        // We retrieve the value using the 'plain_password' alias defined in Admin.php
+        $stored_password = $record['plain_password']; 
 
-        if (password_verify($password, $password_hash)) {
+        // Direct comparison (==) for temporary plain-text mode
+        if ($password == $stored_password) {
             // Authentication successful!
             if (session_status() == PHP_SESSION_NONE) {
                 session_start();
