@@ -1,56 +1,50 @@
 <?php
-// Start session
+// search_results.php
+
+// Start session and authorization check
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Authorization Check (ensure user is logged in)
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'user') {
+$valid_user_types = ['user', 'passenger'];
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset($_SESSION['user_type']) || !in_array($_SESSION['user_type'], $valid_user_types, true)) {
     header("Location: login.php");
     exit;
 }
 
-// 2. Include Controller
-require_once 'controllers/BusController.php';
+// Include necessary models and constants
+require_once __DIR__ . '/models/Bus.php';
+$busModel = new Bus();
+const CURRENCY_SYMBOL = 'RWF ';
 
-$user_name = htmlspecialchars($_SESSION['name']);
-$search_results = [];
-$error_message = '';
+// 1. Retrieve and sanitize search parameters from the URL (GET request)
+$from = trim(htmlspecialchars($_GET['from'] ?? ''));
+$to = trim(htmlspecialchars($_GET['to'] ?? ''));
+$date = htmlspecialchars($_GET['date'] ?? date('Y-m-d'));
 
-// 3. Get Search Parameters from URL (GET)
-$departure = $_GET['from'] ?? '';
-$destination = $_GET['to'] ?? '';
-$date = $_GET['date'] ?? '';
-
-// Format the date for display
-$display_date = date('l, F j, Y', strtotime($date));
-
-// 4. Perform Search using the Controller
-if (!empty($departure) && !empty($destination) && !empty($date)) {
-    
-    $busController = new BusController();
-    $results = $busController->getSearchResults($departure, $destination, $date);
-
-    if ($results === false) {
-        $error_message = "Search parameters are incomplete.";
-    } elseif (empty($results)) {
-        $error_message = "No buses found for this route on {$display_date}.";
-    } else {
-        $search_results = $results;
-    }
-} else {
-    // If user accesses the page without search parameters
-    $error_message = "Please return to the dashboard and enter your search criteria.";
+// Check for required parameters and redirect if missing
+if (empty($from) || empty($to) || empty($date)) {
+    $_SESSION['error_message'] = "Please provide departure, destination, and date to search for buses.";
+    header("Location: user_dashboard.php");
+    exit;
 }
 
-?>
+// 2. Query the model for available schedules
+$available_schedules = [];
+if (method_exists($busModel, 'searchSchedules')) {
+    $available_schedules = $busModel->searchSchedules($from, $to, $date);
+}
 
+// Optional: Format the date for display
+$display_date = date('l, F j, Y', strtotime($date));
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results - BusBook</title>
+    <title>Search Results: <?php echo $from; ?> to <?php echo $to; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -58,6 +52,8 @@ if (!empty($departure) && !empty($destination) && !empty($date)) {
                 extend: {
                     colors: {
                         'primary-indigo': '#4f46e5',
+                        'success-green': '#10b981',
+                        'danger-red': '#ef4444',
                     }
                 }
             }
@@ -70,10 +66,10 @@ if (!empty($departure) && !empty($destination) && !empty($date)) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center">
-                    <a href="user_dashboard.php" class="text-2xl font-bold text-primary-indigo">BusBook</a>
+                    <span class="text-2xl font-bold text-primary-indigo">BusBook</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="text-gray-700 font-medium"><?php echo $user_name; ?></span>
+                    <a href="user_dashboard.php" class="text-gray-600 hover:text-primary-indigo font-medium">Dashboard</a>
                     <a href="logout.php" class="text-red-600 hover:text-red-800 font-medium py-1 px-3 border border-red-600 rounded-md">Logout</a>
                 </div>
             </div>
@@ -82,80 +78,65 @@ if (!empty($departure) && !empty($destination) && !empty($date)) {
 
     <main class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
         
-        <div class="bg-white shadow rounded-xl p-6 mb-8 border-l-4 border-primary-indigo">
-            <h1 class="text-2xl font-bold text-gray-900">
-                Buses from <?php echo htmlspecialchars($departure); ?> to <?php echo htmlspecialchars($destination); ?>
-            </h1>
-            <p class="text-gray-500 mt-1">
-                Traveling on: <?php echo $display_date; ?> 
-                <a href="user_dashboard.php" class="text-primary-indigo hover:underline ml-3 text-sm">Modify Search</a>
-            </p>
-        </div>
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Bus Search Results</h1>
+        <p class="text-xl text-gray-600 mb-8">
+            <span class="font-bold text-primary-indigo"><?php echo $from; ?></span> &rarr; <span class="font-bold text-primary-indigo"><?php echo $to; ?></span> on <?php echo $display_date; ?>
+        </p>
 
-        <?php if ($error_message): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <?php echo htmlspecialchars($error_message); ?>
+        <a href="user_dashboard.php" class="inline-flex items-center text-sm text-primary-indigo hover:text-indigo-700 mb-6">
+            &larr; Change Search Criteria
+        </a>
+
+        <?php if (empty($available_schedules)): ?>
+            <div class="text-center py-16 bg-white shadow-xl rounded-xl border border-dashed border-gray-300">
+                <p class="text-2xl text-gray-700 font-semibold mb-3">No Buses Found</p>
+                <p class="text-lg text-gray-500">
+                    We couldn't find any scheduled buses for the selected route and date.
+                </p>
             </div>
-        <?php elseif (!empty($search_results)): ?>
-            
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
-                <?php echo count($search_results); ?> matching trips found:
-            </h2>
-            
-            <div class="space-y-4">
-                <?php foreach ($search_results as $bus): ?>
+        <?php else: ?>
+            <div class="space-y-6">
+                <?php foreach ($available_schedules as $schedule): ?>
                     <?php
-                        // Format times and amenities
-                        $departure_time = date('H:i', strtotime($bus['departure_time']));
-                        $arrival_time = date('H:i', strtotime($bus['arrival_time']));
-                        // Note: total_seats is currently not dynamic. We'll improve this later.
-                        $available_seats = $bus['total_seats']; 
-                        $amenities = explode(',', $bus['amenities']); // Assuming amenities is a comma-separated string
+                    // Display calculation: remaining seats
+                    $total_seats = $schedule['bus_capacity'] ?? 0;
+                    $booked_seats = $schedule['booked_seats'] ?? 0;
+                    $remaining_seats = $total_seats - $booked_seats;
                     ?>
-                    
-                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center hover:shadow-xl transition duration-300">
+                    <div class="bg-white shadow-lg rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 border-primary-indigo">
                         
-                        <div class="mb-4 md:mb-0 md:w-1/3">
-                            <p class="text-lg font-bold text-gray-900"><?php echo htmlspecialchars($bus['bus_operator']); ?></p>
-                            <p class="text-sm text-gray-500"><?php echo htmlspecialchars($bus['bus_type']); ?> | Route: <?php echo htmlspecialchars($bus['route_name']); ?></p>
-                            <p class="text-sm text-green-600 mt-1">
-                                <?php echo htmlspecialchars($available_seats); ?> Seats Available
+                        <div class="flex-grow mb-4 md:mb-0">
+                            <h3 class="text-2xl font-bold text-gray-800"><?php echo htmlspecialchars($schedule['operator_name'] ?? 'Unknown Operator'); ?></h3>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <span class="font-semibold">Route:</span> <?php echo htmlspecialchars($schedule['departure_location'] ?? 'N/A'); ?> &rarr; <?php echo htmlspecialchars($schedule['destination_location'] ?? 'N/A'); ?>
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                <strong>Bus Plate:</strong> <?php echo htmlspecialchars($schedule['plate_number'] ?? 'N/A'); ?> 
+                                </p>
+                        </div>
+
+                        <div class="text-left md:text-right mr-6">
+                            <p class="text-sm font-medium text-gray-700">Departure Time</p>
+                            <p class="text-3xl font-extrabold text-primary-indigo">
+                                <?php echo date('H:i', strtotime($schedule['departure_time'] ?? '00:00')); ?>
                             </p>
                         </div>
                         
-                        <div class="mb-4 md:mb-0 md:w-1/3 flex justify-center space-x-6">
-                            <div>
-                                <p class="text-2xl font-bold text-primary-indigo"><?php echo $departure_time; ?></p>
-                                <p class="text-xs text-gray-500">Departure</p>
-                            </div>
-                            <div class="text-center text-gray-400 self-center">
-                                <span class="text-sm">--&gt;</span>
-                            </div>
-                            <div>
-                                <p class="text-2xl font-bold text-gray-900"><?php echo $arrival_time; ?></p>
-                                <p class="text-xs text-gray-500">Arrival</p>
-                            </div>
-                        </div>
-
-                        <div class="md:w-1/3 flex justify-end items-center space-x-4">
-                            <div class="text-right">
-                                <p class="text-3xl font-extrabold text-green-600">
-                                    $<?php echo number_format($bus['price'], 0); ?>
-                                </p>
-                                <p class="text-xs text-gray-500">per seat</p>
-                            </div>
-                            <a href="seat_selection.php?schedule_id=<?php echo $bus['schedule_id']; ?>" 
-                               class="bg-primary-indigo hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150">
-                                Book Seat
+                        <div class="flex flex-col items-start md:items-end space-y-2">
+                            <span class="text-xl font-semibold text-gray-800">
+                                <?php echo CURRENCY_SYMBOL; ?><?php echo number_format($schedule['price'] ?? 0, 0); ?>
+                            </span>
+                            <span class="text-sm font-medium <?php echo ($remaining_seats <= 5 && $remaining_seats > 0) ? 'text-danger-red' : 'text-success-green'; ?>">
+                                <?php echo $remaining_seats; ?> Seats Remaining
+                            </span>
+                            
+                            <a href="book_seat.php?schedule_id=<?php echo urlencode($schedule['schedule_id'] ?? ''); ?>" 
+                               class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 text-sm">
+                                Select Seats &rarr;
                             </a>
                         </div>
                     </div>
                 <?php endforeach; ?>
-            </div>
-            
-        <?php else: ?>
-            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
-                Start your search from the <a href="user_dashboard.php" class="font-bold underline">dashboard</a>.
             </div>
         <?php endif; ?>
 

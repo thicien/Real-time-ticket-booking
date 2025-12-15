@@ -1,17 +1,18 @@
 <?php
 // login.php (Dedicated to Passenger Login and Routing)
-// This file assumes a separate 'admin_login.php' handles admin authentication.
 
-// =================================================================
-// 1. PHP Initialization and Logic
-// =================================================================
+// === DEBUGGING CODE: DELETE WHEN LIVE ===
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+// =======================================
 
 // Start the session at the very beginning
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check if user is already logged in and redirect (prevent accessing login page when logged in)
+// Check if user is already logged in and redirect 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     // Determine the correct dashboard path based on the session variable
     $redirect_path = $_SESSION['user_type'] === 'admin' ? 'admin_dashboard.php' : 'user_dashboard.php';
@@ -20,31 +21,32 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 }
 
 // Include the necessary controller file
-// We only need the AuthController which handles passenger logic
-require_once 'controllers/AuthController.php';
+// Path: relative to login.php, pointing to controllers/AuthController.php
+require_once 'controllers/AuthController.php'; 
 
 $error_message = "";
 $email = ''; // To preserve the email input on error
 
+
 // Handle POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Note: Since we only have the passenger form here, we don't need the 'login_type' input in the form.
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     
     // Instantiate the Controller and handle login
+    // NOTE: This will fail if AuthController.php could not be loaded.
     $authController = new AuthController();
     
-    // The handleLogin method will redirect on success, or return an array on failure.
-    // We explicitly call it for 'user' type here.
-    $result = $authController->handleLogin('user', $email, $password);
+    $result = $authController->handleLogin($email, $password);
 
-    if (!$result['success']) {
+    if ($result['success']) {
+        // Login successful: redirect to dashboard
+        header("Location: " . $result['redirect']);
+        exit;
+    } else {
         // Login failed: set the error message
         $error_message = $result['message'];
     }
-    
-    // Note: If the login succeeds, the controller handles the redirect and exits PHP execution.
 }
 ?>
 
@@ -63,8 +65,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h1 class="text-3xl font-bold text-center text-indigo-700 mb-2">Passenger Login</h1>
         
         <p class="text-center text-sm text-gray-500 mb-6">
-            <a href="admin_login.php" class="text-indigo-600 hover:text-indigo-500 font-medium">
-                Admin Login &rarr;
+            <a href="index.php" class="text-gray-600 hover:text-gray-500 font-medium">
+                &larr; Back to Role Selection
             </a>
         </p>
 

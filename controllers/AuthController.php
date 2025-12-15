@@ -1,53 +1,68 @@
 <?php
-// controllers/AdminController.php (MODIFIED for Plain Text Login)
+// controllers/AuthController.php (For Passenger Authentication)
 
-require_once __DIR__ . '/../models/Admin.php';
+// === DEBUGGING CODE: DELETE WHEN LIVE ===
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+// =======================================
 
-class AdminController {
-    private $adminModel;
+// Adjust the path to your User model using the magic constant __DIR__
+// Path: current_directory/../models/User.php
+require_once __DIR__ . '/../models/User.php';
+
+class AuthController {
+    private $userModel;
 
     public function __construct() {
-        $this->adminModel = new Admin();
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        // NOTE: This will throw a Fatal Error if models/User.php is not found!
+        $this->userModel = new User();
     }
 
-    public function handleLogin($email, $password) {
-        if (empty($email) || empty($password)) {
-            $_SESSION['admin_error'] = "Email and password are required.";
-            header("Location: admin_login.php");
-            exit();
-        }
+    /**
+     * Handles passenger registration logic.
+     * ... (registration code omitted for brevity but should remain)
+     */
+    public function register(array $data) {
+        // ...
+        // (Your existing registration logic here)
+        // ...
+    }
 
-        $record = $this->adminModel->findAdminByEmail($email);
+    /**
+     * Handles passenger login logic.
+     * @return array {'success': bool, 'message': string, 'redirect': string (on success)}
+     */
+    public function handleLogin(string $email, string $password) {
+        
+        $record = $this->userModel->findUserByEmail($email);
 
-        if (!$record) {
-            $_SESSION['admin_error'] = "Invalid credentials. Admin account not found.";
-            header("Location: admin_login.php");
-            exit();
-        }
-
-        // --- INSECURE CHANGE: Using direct string comparison (==) instead of password_verify() ---
-        $stored_password = $record['plain_password']; // Fetched as plain text from DB
-
-        if ($password == $stored_password) {
-            // Authentication successful!
-            if (session_status() == PHP_SESSION_NONE) {
-                session_start();
-            }
+        // Check if a record was found AND securely verify the password
+        if ($record && password_verify($password, $record['password_hash'])) {
             
-            // Set Admin Session Variables
+            // Authentication successful! Set Session Variables
             $_SESSION['logged_in'] = true;
-            $_SESSION['user_type'] = 'admin';
-            $_SESSION['user_id'] = $record['admin_id'];
-            $_SESSION['name'] = $record['full_name'];
-
-            header("Location: admin_dashboard.php");
-            exit();
+            $_SESSION['user_type'] = 'passenger';
+            $_SESSION['user_id'] = $record['user_id'];
+            $_SESSION['name'] = $record['first_name'] . ' ' . $record['last_name'];
+            
+            // Return success with redirect URL
+            return ['success' => true, 'message' => 'Login successful!', 'redirect' => 'user_dashboard.php'];
 
         } else {
-            // Password verification failed
-            $_SESSION['admin_error'] = "Invalid password.";
-            header("Location: admin_login.php");
-            exit();
+            // Generic message for security
+            return ['success' => false, 'message' => 'Invalid email or password.'];
         }
+    }
+
+    public function logout() {
+        session_unset();
+        session_destroy();
+        // Redirect to home page or login page
+        header("Location: index.php"); // Updated to redirect to the selector page
+        exit();
     }
 }

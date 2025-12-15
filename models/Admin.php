@@ -33,22 +33,25 @@ class Admin {
             SELECT 
                 admin_id, 
                 email, 
-                full_name,         
-                password_hash AS plain_password  /* Aliased for plain text login */
+                full_name,          
+                password AS plain_password  /* CORRECTION: Changed from password_hash to password */
             FROM 
                 " . $this->admin_table . "
             WHERE 
                 email = :email
-            LIMIT 0,1";
+            LIMIT 1"; // Changed LIMIT 0,1 to LIMIT 1 (modern SQL)
 
         try {
-            // Error line 23 was here: $this->conn->prepare(). Now it should be defined.
             $stmt = $this->conn->prepare($query); 
             $stmt->bindParam(':email', $email);
             $stmt->execute();
+            
+            // Fetch the record. Returns false if no row is found.
             return $stmt->fetch(PDO::FETCH_ASSOC);
+
         } catch(PDOException $e) {
             // Log error: error_log("Admin lookup error: " . $e->getMessage());
+            // If the connection is bad or the table/column names are wrong, this returns false.
             return false;
         }
     }

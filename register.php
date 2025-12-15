@@ -3,6 +3,12 @@
 // 1. PHP Initialization and Logic
 // =================================================================
 
+// === DEBUGGING CODE: DELETE WHEN LIVE ===
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+// =======================================
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
@@ -13,11 +19,14 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     exit;
 }
 
-require_once 'controllers/AuthController.php';
+// NOTE: This path is relative to the register.php file
+require_once __DIR__ . '/controllers/AuthController.php';
 
 $error_message = "";
 $success_message = "";
-// Preserve form inputs on failure
+
+// Initialize $fields for the HTML form display on initial load (GET request)
+// This array will hold the display values
 $fields = [
     'first_name' => '',
     'last_name' => '',
@@ -26,29 +35,56 @@ $fields = [
 ];
 
 // Handle POST request
+// register.php (Replace the entire POST handling block with this)
+
+// Handle POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
-    // Populate fields from POST data
-    $fields['first_name'] = $_POST['first_name'] ?? '';
-    $fields['last_name'] = $_POST['last_name'] ?? '';
-    $fields['email'] = $_POST['email'] ?? '';
-    $fields['phone_number'] = $_POST['phone_number'] ?? '';
-    
-    // Gather all data for the controller
-    $registration_data = array_merge($fields, [
-        'password' => $_POST['password'] ?? '',
-        'confirm_password' => $_POST['confirm_password'] ?? ''
-    ]);
+    // 1. Safely collect and sanitize data using filter_input (returns NULL if not set)
+    // We do not trim/sanitize passwords yet, just retrieve the raw input.
+    $raw_first_name = filter_input(INPUT_POST, 'first_name', FILTER_SANITIZE_STRING);
+    $raw_last_name = filter_input(INPUT_POST, 'last_name', FILTER_SANITIZE_STRING);
+    $raw_email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+    $raw_phone_number = filter_input(INPUT_POST, 'phone_number', FILTER_SANITIZE_STRING);
+    $password = filter_input(INPUT_POST, 'password');
+    $confirm_password = filter_input(INPUT_POST, 'confirm_password');
 
+    // 2. Explicitly ensure all data variables are strings (not null)
+    // This step is the key to preventing "array offset on value of type null" warnings
+    // by ensuring every variable used below is a string or empty string.
+    $fields['first_name'] = trim($raw_first_name ?? '');
+    $fields['last_name'] = trim($raw_last_name ?? '');
+    $fields['email'] = trim($raw_email ?? '');
+    $fields['phone_number'] = trim($raw_phone_number ?? '');
+    
+    $safe_password = $password ?? '';
+    $safe_confirm_password = $confirm_password ?? '';
+    
+    // 3. Gather all data for the controller
+    // This array is now assembled only from variables guaranteed to be strings.
+    $registration_data = [
+        'first_name' => $fields['first_name'],
+        'last_name' => $fields['last_name'],
+        'email' => $fields['email'],
+        'phone_number' => $fields['phone_number'],
+        'password' => $safe_password,        // No more risk of null here
+        'confirm_password' => $safe_confirm_password // No more risk of null here
+    ];
+    
+    // 4. Processing logic
     $authController = new AuthController();
     $result = $authController->register($registration_data);
 
-    // Note: If registration and subsequent login are successful, 
-    // the controller will handle the redirect via the handleLogin call.
-    if (!$result['success']) {
+    if ($result['success']) {
+        // Registration successful: redirect to login page
+        header("Location: login.php");
+        exit;
+    } else {
+        // Registration failed: set the error message, fields retain POST values
         $error_message = $result['message'];
     }
 }
+// ... rest of the HTML structure remains the same
 ?>
 
 <!DOCTYPE html>

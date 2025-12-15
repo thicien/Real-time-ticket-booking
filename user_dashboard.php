@@ -4,65 +4,54 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Authorization Check
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'user') {
+// Authorization check: allow both 'user' and 'passenger' labels if either used by your AuthController
+$valid_user_types = ['user', 'passenger'];
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset($_SESSION['user_type']) || !in_array($_SESSION['user_type'], $valid_user_types, true)) {
     header("Location: login.php");
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$user_name = htmlspecialchars($_SESSION['name']);
+$user_id = $_SESSION['user_id'] ?? null;
+$user_name = isset($_SESSION['name']) ? htmlspecialchars($_SESSION['name']) : 'User';
 const CURRENCY_SYMBOL = 'RWF ';
 
-// 2. Data/Model Inclusion
-require_once 'models/Bus.php';
+// Include the Bus model (adjust path if your structure differs)
+require_once __DIR__ . '/models/Bus.php';
 $busModel = new Bus();
 
-// 3. Define Locations (20+ common locations in Rwanda for Datalist)
+// Locations datalist
 $all_locations = [
-    'Kigali', 'Musanze', 'Huye', 'Rubavu', 'Rusizi', 'Nyagatare', 
-    'Gicumbi', 'Rwamagana', 'Muhanga', 'Ngoma', 'Karongi', 'Nyanza', 
-    'Rulindo', 'Kayonza', 'Kirehe', 'Kamonyi', 'Gasabo', 'Kicukiro', 
+    'Kigali', 'Musanze', 'Huye', 'Rubavu', 'Rusizi', 'Nyagatare',
+    'Gicumbi', 'Rwamagana', 'Muhanga', 'Ngoma', 'Karongi', 'Nyanza',
+    'Rulindo', 'Kayonza', 'Kirehe', 'Kamonyi', 'Gasabo', 'Kicukiro',
     'Nyamasheke', 'Gakenke', 'Burera', 'Ruhango', 'Bugesera', 'Nyarugenge'
 ];
 
-// 4. Fetch Booking History (CRITICAL: You must implement getBookingHistory method in Bus.php)
-/*
-    The getBookingHistory method in your Bus.php model MUST return an array like this:
-    [
-        [
-            'booking_id' => 101, 
-            'departure_location' => 'Kigali', 
-            'destination_location' => 'Musanze', 
-            'departure_time' => '2025-12-20 08:00:00',
-            'bus_operator' => 'Volcano Express',
-            'seat_count' => 2,
-            'total_amount' => 5000,
-            'status' => 'Confirmed'
-        ],
-        // ... more bookings
-    ]
-*/
-$booking_history = $busModel->getBookingHistory($user_id);
+// Fetch booking history; guard if method missing or returns non-array
+$booking_history = [];
+if (method_exists($busModel, 'getBookingHistory')) {
+    $booking_history = $busModel->getBookingHistory($user_id);
+    if (!is_array($booking_history)) {
+        $booking_history = [];
+    }
+}
 
-// Sort bookings: Upcoming first, then past.
+// Sort bookings: upcoming first, then newest first within each group
 usort($booking_history, function($a, $b) {
     $now = time();
-    $a_time = strtotime($a['departure_time']);
-    $b_time = strtotime($b['departure_time']);
+    $a_time = strtotime($a['departure_time'] ?? '1970-01-01 00:00:00');
+    $b_time = strtotime($b['departure_time'] ?? '1970-01-01 00:00:00');
 
     $a_is_upcoming = $a_time > $now;
     $b_is_upcoming = $b_time > $now;
 
     if ($a_is_upcoming === $b_is_upcoming) {
-        return $b_time - $a_time; // Sort newest first within the group
+        // newest first within the same group
+        return $b_time <=> $a_time;
     }
-    return $a_is_upcoming ? -1 : 1; // Put upcoming first
+    return $a_is_upcoming ? -1 : 1;
 });
-
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -153,7 +142,9 @@ usort($booking_history, function($a, $b) {
 
         <div id="booking-history" class="bg-white shadow-md rounded-xl p-6 md:p-8">
             <h2 class="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
-                <svg class="inline w-6 h-6 mr-2 text-primary-indigo" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                <svg class="inline w-6 h-6 mr-2 text-primary-indigo" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 Your Booking History (<?php echo count($booking_history); ?> Trips)
             </h2>
             
@@ -166,40 +157,42 @@ usort($booking_history, function($a, $b) {
                 <div class="space-y-4">
                     <?php foreach ($booking_history as $booking): ?>
                         <?php 
-                            $is_upcoming = strtotime($booking['departure_time']) > time();
-                            $status_color = $booking['status'] === 'Confirmed' ? 'bg-success-green' : ($booking['status'] === 'Cancelled' ? 'bg-danger-red' : 'bg-gray-400');
+                            $departure_time = $booking['departure_time'] ?? '1970-01-01 00:00:00';
+                            $is_upcoming = strtotime($departure_time) > time();
+                            $status = $booking['status'] ?? 'Pending';
+                            $status_color = $status === 'Confirmed' ? 'bg-success-green' : ($status === 'Cancelled' ? 'bg-danger-red' : 'bg-gray-400');
                             $border_color = $is_upcoming ? 'border-l-4 border-primary-indigo' : 'border-l-4 border-gray-300';
                         ?>
                         <div class="bg-white shadow-lg rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center <?php echo $border_color; ?>">
                             
                             <div class="flex-grow mb-3 md:mb-0">
-                                <p class="text-xs font-semibold uppercase text-gray-500">REF: <?php echo htmlspecialchars($booking['booking_id']); ?></p>
+                                <p class="text-xs font-semibold uppercase text-gray-500">REF: <?php echo htmlspecialchars($booking['booking_id'] ?? 'N/A'); ?></p>
                                 <h3 class="text-xl font-bold text-gray-800">
-                                    <?php echo htmlspecialchars($booking['departure_location']); ?> &rarr; <?php echo htmlspecialchars($booking['destination_location']); ?>
+                                    <?php echo htmlspecialchars($booking['departure_location'] ?? 'Unknown'); ?> &rarr; <?php echo htmlspecialchars($booking['destination_location'] ?? 'Unknown'); ?>
                                 </h3>
                                 <p class="text-sm text-gray-600 mt-1">
-                                    **Operator:** <?php echo htmlspecialchars($booking['bus_operator']); ?> | 
-                                    **Seats:** <?php echo htmlspecialchars($booking['seat_count']); ?>
+                                    <strong>Operator:</strong> <?php echo htmlspecialchars($booking['bus_operator'] ?? '—'); ?> | 
+                                    <strong>Seats:</strong> <?php echo htmlspecialchars($booking['seat_count'] ?? '1'); ?>
                                 </p>
                             </div>
 
                             <div class="text-left md:text-right mr-6">
                                 <p class="text-sm font-medium text-gray-700">
-                                    <?php echo date('D, M j, Y', strtotime($booking['departure_time'])); ?>
+                                    <?php echo date('D, M j, Y', strtotime($departure_time)); ?>
                                 </p>
                                 <p class="text-xl font-extrabold text-primary-indigo">
-                                    <?php echo date('H:i', strtotime($booking['departure_time'])); ?>
+                                    <?php echo date('H:i', strtotime($departure_time)); ?>
                                 </p>
                             </div>
                             
                             <div class="flex flex-col items-start md:items-end space-y-2">
                                 <span class="text-white text-xs font-bold px-3 py-1 rounded-full <?php echo $status_color; ?>">
-                                    <?php echo htmlspecialchars($booking['status']); ?>
+                                    <?php echo htmlspecialchars($status); ?>
                                 </span>
                                 <p class="text-lg font-semibold text-gray-800">
-                                    <?php echo CURRENCY_SYMBOL; ?><?php echo number_format($booking['total_amount'], 0); ?>
+                                    <?php echo CURRENCY_SYMBOL; ?><?php echo number_format($booking['total_amount'] ?? 0, 0); ?>
                                 </p>
-                                <a href="confirmation.php?booking_id=<?php echo $booking['booking_id']; ?>" 
+                                <a href="confirmation.php?booking_id=<?php echo urlencode($booking['booking_id'] ?? ''); ?>" 
                                    class="text-sm font-medium text-primary-indigo hover:text-indigo-700 underline">
                                     View E-Ticket &rarr;
                                 </a>
