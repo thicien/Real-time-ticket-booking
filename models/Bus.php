@@ -1,12 +1,10 @@
 <?php
-// models/Bus.php
 
 require_once __DIR__ . '/../config/Database.php';
 
 class Bus {
     private $conn;
 
-    // 1. Database table definitions (for reference in queries)
     private $bookings_table = "bookings";
     private $schedules_table = "schedules";
     private $routes_table = "routes";
