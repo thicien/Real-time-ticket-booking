@@ -82,12 +82,9 @@ class Bus {
         }
     }
     
-    // --- Booking History Function (Used by user_dashboard.php) ---
-    
-    /**
-     * Retrieves the booking history for a specific user.
-     * @param int $user_id
-     * @return array List of booking records.
+
+     * @param int 
+     * @return array 
      */
     public function getBookingHistory($user_id) {
         if (empty($user_id)) {
@@ -130,7 +127,6 @@ class Bus {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch(PDOException $e) {
-            // Log error: error_log("Booking history error: " . $e->getMessage());
             return [];
         }
     }
