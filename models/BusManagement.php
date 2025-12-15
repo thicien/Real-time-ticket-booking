@@ -1,17 +1,14 @@
 <?php
-// models/BusManagement.php
 require_once __DIR__ . '/../config/Database.php';
 
 class BusManagement {
     private $conn;
-    private $table = "buses"; // Replace with your actual table name
+    private $table = "buses";
 
     public function __construct() {
         $database = new Database();
-        $this->conn = $database->getConnection(); // Works with the corrected Database.php
+        $this->conn = $database->getConnection();
     }
-
-    // --- CRUD Methods ---
 
     public function readAll() {
         $query = "SELECT bus_id, bus_plate, total_seats, bus_type, bus_operator FROM " . $this->table . " ORDER BY bus_plate ASC";
