@@ -1,5 +1,4 @@
 <?php
-// models/Route.php - CORRECTED WITH ERROR LOGGING
 
 require_once __DIR__ . '/../config/Database.php';
 
@@ -11,8 +10,6 @@ class Route {
         $database = new Database();
         $this->conn = $database->connect();
     }
-
-    // --- CRUD Methods for Route Management ---
 
     /**
      * Retrieves all routes.
@@ -47,12 +44,10 @@ class Route {
             $stmt->bindParam(':route_name', $data['route_name']);
             $stmt->bindParam(':dep_loc', $data['departure_location']);
             $stmt->bindParam(':dest_loc', $data['destination_location']);
-            // Ensure fare is treated as a float/decimal in DB
             $stmt->bindParam(':fare', $data['fare_base']); 
 
             return $stmt->execute();
         } catch (PDOException $e) {
-            // CRUCIAL: Log the specific error to the server log
             error_log("Route Create Error (Code: {$e->getCode()}): " . $e->getMessage()); 
             return false;
         }
