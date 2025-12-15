@@ -1,29 +1,20 @@
 <?php
-// admin_dashboard.php
-
-// Start session and check if admin is logged in
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Security Check: Ensure user is logged in AND is of type 'admin'
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'admin') {
-    // Redirect to login if not authenticated as admin
     header("Location: login.php");
     exit;
 }
 
-// Include the Admin Model
 require_once 'models/Admin.php';
 $adminModel = new Admin();
 
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
 const CURRENCY_SYMBOL = 'RWF ';
-
-// 1. Fetch Dynamic Stats from the Admin Model
 $raw_stats = $adminModel->getDashboardStats(); 
 
-// 2. Format the stats for display
 $stats = [
     'Total Bookings' => number_format($raw_stats['Total Bookings']),
     'Total Revenue' => CURRENCY_SYMBOL . number_format($raw_stats['Total Revenue'], 0),
@@ -32,7 +23,6 @@ $stats = [
 ];
 
 
-// Define the navigation items based on your requirements
 $nav_items = [
     'Bus Management' => 'bus_management.php',
     'Route Management' => 'route_management.php',
