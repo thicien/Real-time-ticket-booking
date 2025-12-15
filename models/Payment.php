@@ -1,5 +1,4 @@
 <?php
-// models/Payment.php
 
 require_once __DIR__ . '/../config/Database.php';
 
@@ -45,7 +44,6 @@ class Payment {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            // error_log("Payment Read All Error: " . $e->getMessage());
             return [];
         }
     }
