@@ -1,5 +1,4 @@
 <?php
-// models/Report.php
 
 require_once __DIR__ . '/../config/Database.php';
 
@@ -27,7 +26,6 @@ class Report {
             $stmt->execute();
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Format results into an easily usable associative array
             $summary = [
                 'Pending' => 0,
                 'Confirmed' => 0,
@@ -45,7 +43,6 @@ class Report {
             return $summary;
 
         } catch (PDOException $e) {
-            // error_log("Booking Status Summary Error: " . $e->getMessage());
             return ['Pending' => 0, 'Confirmed' => 0, 'Cancelled' => 0, 'Total' => 0];
         }
     }
@@ -57,7 +54,6 @@ class Report {
      * @return array Total revenue and number of transactions.
      */
     public function getRevenueReport($startDate, $endDate) {
-        // We only count 'Paid' payments associated with 'Confirmed' bookings
         $query = "SELECT 
                     SUM(p.payment_amount) AS total_revenue,
                     COUNT(p.payment_id) AS total_transactions
@@ -76,7 +72,6 @@ class Report {
             return $stmt->fetch(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
-            // error_log("Revenue Report Error: " . $e->getMessage());
             return ['total_revenue' => 0, 'total_transactions' => 0];
         }
     }
@@ -107,7 +102,6 @@ class Report {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch (PDOException $e) {
-            // error_log("Occupancy Report Error: " . $e->getMessage());
             return [];
         }
     }
