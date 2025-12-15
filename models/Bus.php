@@ -31,7 +31,6 @@ class Bus {
      * @return array|false List of matching schedules or false on error.
      */
     public function searchSchedules($from, $to, $date) {
-        // Define the date range for the search (start of day to end of day)
         $start_datetime = $date . ' 00:00:00';
         $end_datetime = $date . ' 23:59:59';
         
@@ -77,7 +76,6 @@ class Bus {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch(PDOException $e) {
-            // Log error: error_log("Bus search error: " . $e->getMessage());
             return false;
         }
     }
