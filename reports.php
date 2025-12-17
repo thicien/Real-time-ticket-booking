@@ -20,19 +20,14 @@ if (!defined('CURRENCY_SYMBOL')) {
     define('CURRENCY_SYMBOL', 'RWF ');
 }
 
-// 3. FETCH DATA FOR REPORTS
-
-// A. Booking Status Summary (Static)
 $booking_summary = $reportModel->getBookingStatusSummary();
 
-// B. Revenue Report (Dynamic based on date filter)
 $today = date('Y-m-d');
 $last_30_days = date('Y-m-d', strtotime('-30 days'));
 
 $start_date = $_GET['start_date'] ?? $last_30_days;
 $end_date = $_GET['end_date'] ?? $today;
 
-// Input sanitization/validation for dates
 if (!strtotime($start_date) || !strtotime($end_date)) {
     $start_date = $last_30_days;
     $end_date = $today;
@@ -40,10 +35,8 @@ if (!strtotime($start_date) || !strtotime($end_date)) {
 
 $revenue_data = $reportModel->getRevenueReport($start_date, $end_date);
 
-// C. Occupancy Report (Future schedules)
 $occupancy_data = $reportModel->getOccupancyReport();
 
-// 4. Define Nav Items for Sidebar
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
 $nav_items = [
     'Bus Management' => 'bus_management.php',
