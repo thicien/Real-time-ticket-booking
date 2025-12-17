@@ -10,7 +10,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit;
 }
 
-// 2. Include Controller
 require_once 'controllers/BusController.php';
 
 $schedule_id = $_GET['schedule_id'] ?? null;
@@ -18,7 +17,6 @@ $trip = null;
 $error_message = '';
 $user_name = htmlspecialchars($_SESSION['name']);
 
-// 3. Fetch Trip Data
 if (!is_numeric($schedule_id)) {
     $error_message = "Invalid trip selected.";
 } else {
@@ -30,9 +28,8 @@ if (!is_numeric($schedule_id)) {
     }
 }
 
-// Helper function to generate seat labels (A1, A2, B1, etc.)
 function generate_seat_label($row, $col) {
-    $row_letter = chr(65 + $row - 1); // 1 -> A, 2 -> B, etc.
+    $row_letter = chr(65 + $row - 1); 
     return $row_letter . $col;
 }
 
