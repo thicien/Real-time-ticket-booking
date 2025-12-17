@@ -40,8 +40,6 @@ $fields = [
 // Handle POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
-    // 1. Safely collect and sanitize data using filter_input (returns NULL if not set)
-    // We do not trim/sanitize passwords yet, just retrieve the raw input.
     $raw_first_name = filter_input(INPUT_POST, 'first_name', FILTER_SANITIZE_STRING);
     $raw_last_name = filter_input(INPUT_POST, 'last_name', FILTER_SANITIZE_STRING);
     $raw_email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
@@ -49,9 +47,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = filter_input(INPUT_POST, 'password');
     $confirm_password = filter_input(INPUT_POST, 'confirm_password');
 
-    // 2. Explicitly ensure all data variables are strings (not null)
-    // This step is the key to preventing "array offset on value of type null" warnings
-    // by ensuring every variable used below is a string or empty string.
     $fields['first_name'] = trim($raw_first_name ?? '');
     $fields['last_name'] = trim($raw_last_name ?? '');
     $fields['email'] = trim($raw_email ?? '');
@@ -60,15 +55,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $safe_password = $password ?? '';
     $safe_confirm_password = $confirm_password ?? '';
     
-    // 3. Gather all data for the controller
-    // This array is now assembled only from variables guaranteed to be strings.
     $registration_data = [
         'first_name' => $fields['first_name'],
         'last_name' => $fields['last_name'],
         'email' => $fields['email'],
         'phone_number' => $fields['phone_number'],
-        'password' => $safe_password,        // No more risk of null here
-        'confirm_password' => $safe_confirm_password // No more risk of null here
+        'password' => $safe_password,      
+        'confirm_password' => $safe_confirm_password 
     ];
     
     $authController = new AuthController();
