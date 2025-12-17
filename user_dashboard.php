@@ -1,10 +1,9 @@
 <?php
-// Start session
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Authorization check: allow both 'user' and 'passenger' labels if either used by your AuthController
 $valid_user_types = ['user', 'passenger'];
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset($_SESSION['user_type']) || !in_array($_SESSION['user_type'], $valid_user_types, true)) {
     header("Location: login.php");
