@@ -12,30 +12,25 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset(
     exit;
 }
 
-// Include necessary models and constants
 require_once __DIR__ . '/models/Bus.php';
 $busModel = new Bus();
 const CURRENCY_SYMBOL = 'RWF ';
 
-// 1. Retrieve and sanitize search parameters from the URL (GET request)
 $from = trim(htmlspecialchars($_GET['from'] ?? ''));
 $to = trim(htmlspecialchars($_GET['to'] ?? ''));
 $date = htmlspecialchars($_GET['date'] ?? date('Y-m-d'));
 
-// Check for required parameters and redirect if missing
 if (empty($from) || empty($to) || empty($date)) {
     $_SESSION['error_message'] = "Please provide departure, destination, and date to search for buses.";
     header("Location: user_dashboard.php");
     exit;
 }
 
-// 2. Query the model for available schedules
 $available_schedules = [];
 if (method_exists($busModel, 'searchSchedules')) {
     $available_schedules = $busModel->searchSchedules($from, $to, $date);
 }
 
-// Optional: Format the date for display
 $display_date = date('l, F j, Y', strtotime($date));
 
 ?>
