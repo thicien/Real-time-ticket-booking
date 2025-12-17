@@ -71,20 +71,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         'confirm_password' => $safe_confirm_password // No more risk of null here
     ];
     
-    // 4. Processing logic
     $authController = new AuthController();
     $result = $authController->register($registration_data);
 
     if ($result['success']) {
-        // Registration successful: redirect to login page
         header("Location: login.php");
         exit;
     } else {
-        // Registration failed: set the error message, fields retain POST values
         $error_message = $result['message'];
     }
 }
-// ... rest of the HTML structure remains the same
 ?>
 
 <!DOCTYPE html>
