@@ -12,7 +12,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit;
 }
 
-// 2. INCLUDES AND INITIALIZATION
 require_once 'controllers/PaymentManagementController.php'; 
 
 $paymentController = new PaymentManagementController();
@@ -22,11 +21,8 @@ if (!defined('CURRENCY_SYMBOL')) {
     define('CURRENCY_SYMBOL', 'RWF ');
 }
 
-// Define the payment statuses for the dropdown and validation
 $payment_statuses = ['Pending', 'Paid', 'Failed', 'Refunded'];
 
-
-// 3. HANDLE POST REQUESTS (UPDATE STATUS)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     $payment_id = $_POST['payment_id'] ?? null;
@@ -41,12 +37,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $message = $result['message'];
     $message_type = $result['success'] ? 'success' : 'error';
     
-    // Redirect on success/failure to clear POST data and show message
     header("Location: payments_management.php?msg=" . urlencode($message) . "&type=" . $message_type);
     exit;
 }
 
-// 4. HANDLE GET REQUESTS (MESSAGES)
 if (isset($_GET['msg']) && isset($_GET['type'])) {
     $message = htmlspecialchars($_GET['msg']);
     $message_type = htmlspecialchars($_GET['type']);
