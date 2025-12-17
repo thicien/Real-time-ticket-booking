@@ -12,28 +12,23 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit;
 }
 
-// 2. INCLUDES AND INITIALIZATION
 require_once 'controllers/ScheduleController.php'; 
 
 $scheduleController = new ScheduleController();
 $message = '';
 $message_type = ''; 
-// NOTE: Ensure CURRENCY_SYMBOL is defined
+
 if (!defined('CURRENCY_SYMBOL')) {
     define('CURRENCY_SYMBOL', 'RWF ');
 }
 
-// Fetch dependencies for the form
 $routes = $scheduleController->getRoutes();
 $buses = $scheduleController->getBuses();
 
-// Initialize schedule data for the form (used for update/edit mode)
 $edit_schedule = null;
 $action = $_GET['action'] ?? '';
 $schedule_id = $_GET['id'] ?? null;
 
-
-// 3. HANDLE POST REQUESTS (CREATE, UPDATE, DELETE)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     
