@@ -12,20 +12,16 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit;
 }
 
-// 2. INCLUDES AND INITIALIZATION
 require_once 'controllers/RouteController.php'; 
 
 $routeController = new RouteController();
 $message = '';
 $message_type = ''; 
 
-// Initialize route data for the form (used for update/edit mode)
 $edit_route = null;
 $action = $_GET['action'] ?? '';
 $route_id = $_GET['id'] ?? null;
 
-
-// 3. HANDLE POST REQUESTS (CREATE, UPDATE, DELETE)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     
@@ -42,7 +38,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $message = $result['message'];
     $message_type = $result['success'] ? 'success' : 'error';
     
-    // Redirect on success to clear POST data and show message
     if ($result['success']) {
         header("Location: route_management.php?msg=" . urlencode($message) . "&type=" . $message_type);
         exit;
