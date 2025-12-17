@@ -49,21 +49,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $message = $result['message'];
     $message_type = $result['success'] ? 'success' : 'error';
-    
-    // Redirect on success to clear POST data and show message
+   
     if ($result['success']) {
         header("Location: schedule_management.php?msg=" . urlencode($message) . "&type=" . $message_type);
         exit;
     }
 }
 
-// 4. HANDLE GET REQUESTS (MESSAGES, EDIT MODE)
 if (isset($_GET['msg']) && isset($_GET['type'])) {
     $message = htmlspecialchars($_GET['msg']);
     $message_type = htmlspecialchars($_GET['type']);
 }
 
-// Check for Edit Mode
 if ($action == 'edit' && $schedule_id) {
     $edit_schedule = $scheduleController->getScheduleById($schedule_id); 
     if (!$edit_schedule) {
@@ -73,10 +70,8 @@ if ($action == 'edit' && $schedule_id) {
     }
 }
 
-// 5. FETCH ALL SCHEDULES FOR THE LIST VIEW
 $schedules = $scheduleController->index(); 
 
-// 6. Define Nav Items for Sidebar
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
 $nav_items = [
     'Bus Management' => 'bus_management.php',
@@ -87,7 +82,7 @@ $nav_items = [
     'Driver/Staff Management' => 'staff_management.php',
     'Reports' => 'reports.php',
 ];
-$statuses = ['Scheduled', 'Departed', 'Cancelled']; // Available statuses
+$statuses = ['Scheduled', 'Departed', 'Cancelled'];
 ?>
 
 <!DOCTYPE html>
@@ -98,7 +93,6 @@ $statuses = ['Scheduled', 'Departed', 'Cancelled']; // Available statuses
     <title>Schedule Management - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Style for datetime-local input to match theme */
         input[type="datetime-local"] {
             appearance: none;
             -webkit-appearance: none;
