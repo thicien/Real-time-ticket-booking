@@ -64,20 +64,17 @@ $aisle_col = ceil($total_cols / 2);    // Aisle is after the first half of colum
             }
         }
         
-        // --- JavaScript for Interactive Seat Selection ---
         function toggleSeat(seatElement, scheduleId, price) {
             const seatNumber = seatElement.dataset.seat;
             const isBooked = seatElement.classList.contains('bg-seat-booked');
             
             if (isBooked) {
-                // Cannot select a booked seat
                 return;
             }
 
             seatElement.classList.toggle('bg-seat-selected');
             seatElement.classList.toggle('bg-seat-available');
             
-            // Update hidden input field and summary
             updateBookingSummary(seatNumber, price);
         }
 
@@ -88,16 +85,13 @@ $aisle_col = ceil($total_cols / 2);    // Aisle is after the first half of colum
             const isSelected = selectedSeats.includes(seatNumber);
 
             if (isSelected) {
-                // Remove seat
                 selectedSeats = selectedSeats.filter(seat => seat !== seatNumber);
             } else {
-                // Add seat
                 selectedSeats.push(seatNumber);
             }
 
             selectedSeatsInput.value = selectedSeats.join(',');
             
-            // Update summary display
             const seatList = document.getElementById('selected-seat-list');
             seatList.innerHTML = selectedSeats.map(seat => 
                 `<span class="inline-block bg-primary-indigo text-white text-xs font-semibold px-2 py-1 rounded-full">${seat}</span>`
