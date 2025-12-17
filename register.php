@@ -7,13 +7,11 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-// =======================================
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check if user is already logged in
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header("Location: user_dashboard.php");
     exit;
