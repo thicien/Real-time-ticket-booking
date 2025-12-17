@@ -15,11 +15,9 @@ $user_id = $_SESSION['user_id'] ?? null;
 $user_name = isset($_SESSION['name']) ? htmlspecialchars($_SESSION['name']) : 'User';
 const CURRENCY_SYMBOL = 'RWF ';
 
-// Include the Bus model (adjust path if your structure differs)
 require_once __DIR__ . '/models/Bus.php';
 $busModel = new Bus();
 
-// Locations datalist
 $all_locations = [
     'Kigali', 'Musanze', 'Huye', 'Rubavu', 'Rusizi', 'Nyagatare',
     'Gicumbi', 'Rwamagana', 'Muhanga', 'Ngoma', 'Karongi', 'Nyanza',
@@ -27,7 +25,6 @@ $all_locations = [
     'Nyamasheke', 'Gakenke', 'Burera', 'Ruhango', 'Bugesera', 'Nyarugenge'
 ];
 
-// Fetch booking history; guard if method missing or returns non-array
 $booking_history = [];
 if (method_exists($busModel, 'getBookingHistory')) {
     $booking_history = $busModel->getBookingHistory($user_id);
@@ -35,8 +32,6 @@ if (method_exists($busModel, 'getBookingHistory')) {
         $booking_history = [];
     }
 }
-
-// Sort bookings: upcoming first, then newest first within each group
 usort($booking_history, function($a, $b) {
     $now = time();
     $a_time = strtotime($a['departure_time'] ?? '1970-01-01 00:00:00');
@@ -46,7 +41,6 @@ usort($booking_history, function($a, $b) {
     $b_is_upcoming = $b_time > $now;
 
     if ($a_is_upcoming === $b_is_upcoming) {
-        // newest first within the same group
         return $b_time <=> $a_time;
     }
     return $a_is_upcoming ? -1 : 1;
