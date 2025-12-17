@@ -52,11 +52,8 @@ if (isset($_GET['msg']) && isset($_GET['type'])) {
     $message_type = htmlspecialchars($_GET['type']);
 }
 
-
-// 5. FETCH ALL PAYMENTS FOR THE LIST VIEW
 $payments = $paymentController->index(); 
 
-// 6. Define Nav Items for Sidebar
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
 $nav_items = [
     'Bus Management' => 'bus_management.php',
@@ -77,7 +74,6 @@ $nav_items = [
     <title>Payments Management - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Status styles for quick visual reference */
         .status-paid { background-color: #f0fdf4; color: #15803d; border: 1px solid #4ade80; }
         .status-pending { background-color: #fffbe6; color: #92400e; border: 1px solid #fcd34d; }
         .status-failed, .status-refunded { background-color: #fef2f2; color: #b91c1c; border: 1px solid #f87171; }
