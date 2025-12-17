@@ -1,12 +1,9 @@
 <?php
-// schedule_management.php
 
-// 1. SESSION AND SECURITY CHECK
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Security Check: Ensure user is logged in AND is of type 'admin'
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'admin') {
     header("Location: login.php");
     exit;
