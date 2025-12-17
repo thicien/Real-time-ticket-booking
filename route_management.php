@@ -49,13 +49,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// 4. HANDLE GET REQUESTS (MESSAGES, EDIT MODE)
 if (isset($_GET['msg']) && isset($_GET['type'])) {
     $message = htmlspecialchars($_GET['msg']);
     $message_type = htmlspecialchars($_GET['type']);
 }
 
-// Check for Edit Mode
 if ($action == 'edit' && $route_id) {
     $edit_route = $routeController->getRouteById($route_id); 
     if (!$edit_route) {
@@ -65,12 +63,10 @@ if ($action == 'edit' && $route_id) {
     }
 }
 
-// 5. FETCH ALL ROUTES FOR THE LIST VIEW
 $routes = $routeController->index(); 
 
-// 6. Define Nav Items for Sidebar (copied from admin_dashboard)
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
-const CURRENCY_SYMBOL = 'RWF '; // Assuming you use this constant globally
+const CURRENCY_SYMBOL = 'RWF ';
 $nav_items = [
     'Bus Management' => 'bus_management.php',
     'Route Management' => 'route_management.php',
@@ -90,7 +86,6 @@ $nav_items = [
     <title>Route Management - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom Tailwind configuration based on your dashboard */
         .bg-primary-indigo { background-color: #4f46e5; }
         .text-primary-indigo { color: #4f46e5; }
         .border-primary-indigo { border-color: #4f46e5; }
