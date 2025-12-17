@@ -12,21 +12,17 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     exit;
 }
 
-// 2. INCLUDES AND INITIALIZATION
 require_once 'controllers/StaffController.php'; 
 
 $staffController = new StaffController();
 $message = '';
 $message_type = ''; 
 
-// Initialize staff data for the form (used for update/edit mode)
 $edit_staff = null;
 $action = $_GET['action'] ?? '';
 $user_id = $_GET['id'] ?? null;
-$staff_roles = ['driver', 'staff']; // Available roles for this panel
+$staff_roles = ['driver', 'staff'];
 
-
-// 3. HANDLE POST REQUESTS (CREATE, UPDATE, DELETE)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     
@@ -43,20 +39,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $message = $result['message'];
     $message_type = $result['success'] ? 'success' : 'error';
     
-    // Redirect on success to clear POST data and show message
     if ($result['success']) {
         header("Location: staff_management.php?msg=" . urlencode($message) . "&type=" . $message_type);
         exit;
     }
 }
 
-// 4. HANDLE GET REQUESTS (MESSAGES, EDIT MODE)
 if (isset($_GET['msg']) && isset($_GET['type'])) {
     $message = htmlspecialchars($_GET['msg']);
     $message_type = htmlspecialchars($_GET['type']);
 }
 
-// Check for Edit Mode
 if ($action == 'edit' && $user_id) {
     $edit_staff = $staffController->getStaffById($user_id); 
     if (!$edit_staff) {
@@ -65,11 +58,8 @@ if ($action == 'edit' && $user_id) {
         $action = ''; 
     }
 }
-
-// 5. FETCH ALL STAFF FOR THE LIST VIEW
 $staff_members = $staffController->index(); 
 
-// 6. Define Nav Items for Sidebar
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
 $nav_items = [
     'Bus Management' => 'bus_management.php',
