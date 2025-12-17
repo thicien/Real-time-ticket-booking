@@ -1,7 +1,5 @@
 <?php
-// search_results.php
 
-// Start session and authorization check
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
