@@ -36,10 +36,9 @@ function generate_seat_label($row, $col) {
     return $row_letter . $col;
 }
 
-// Constants for bus layout rendering (based on your Bus Model fields)
-$total_rows = $trip['rows'] ?? 8;      // Default to 8 rows
-$total_cols = $trip['columns'] ?? 4;   // Default to 4 seats across (2-aisle-2)
-$aisle_col = ceil($total_cols / 2);    // Aisle is after the first half of columns
+$total_rows = $trip['rows'] ?? 8;     
+$total_cols = $trip['columns'] ?? 4;  
+$aisle_col = ceil($total_cols / 2);   
 
 ?>
 
@@ -56,9 +55,9 @@ $aisle_col = ceil($total_cols / 2);    // Aisle is after the first half of colum
                 extend: {
                     colors: {
                         'primary-indigo': '#4f46e5',
-                        'seat-available': '#22c55e', // Green
-                        'seat-booked': '#ef4444',    // Red
-                        'seat-selected': '#3b82f6',  // Blue
+                        'seat-available': '#22c55e', 
+                        'seat-booked': '#ef4444',   
+                        'seat-selected': '#3b82f6',  
                     }
                 }
             }
