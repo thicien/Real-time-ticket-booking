@@ -19,14 +19,11 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     exit;
 }
 
-// NOTE: This path is relative to the register.php file
 require_once __DIR__ . '/controllers/AuthController.php';
 
 $error_message = "";
 $success_message = "";
 
-// Initialize $fields for the HTML form display on initial load (GET request)
-// This array will hold the display values
 $fields = [
     'first_name' => '',
     'last_name' => '',
@@ -34,10 +31,6 @@ $fields = [
     'phone_number' => ''
 ];
 
-// Handle POST request
-// register.php (Replace the entire POST handling block with this)
-
-// Handle POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     $raw_first_name = filter_input(INPUT_POST, 'first_name', FILTER_SANITIZE_STRING);
