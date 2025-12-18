@@ -79,18 +79,14 @@ if ($booking_details) {
     $host = LOCAL_HOST_IP; 
     $protocol = "http://"; // Assuming XAMPP is running on HTTP
     
-    // Get the base path (e.g., /Online-ticket-booking)
     $path = dirname($_SERVER['PHP_SELF']);
-    // Clean up path for the file (e.g., /Online-ticket-booking/confirmation.php)
+   
     $path = rtrim($path, '/') . '/confirmation.php'; 
 
-    // The link includes the booking_id and the TICKET_VIEW_SECRET for public access
     $qr_code_data_string = $protocol . $host . $path . '?booking_id=' . $booking_details['booking_id'] . '&token=' . TICKET_VIEW_SECRET;
-    
-    // --- END QR CODE URL CONSTRUCTION ---
+
 }
 
-// Use json_encode for safe transfer of the QR string to JavaScript
 $js_qr_code_data = json_encode($qr_code_data_string);
 
 ?>
