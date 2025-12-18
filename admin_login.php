@@ -23,18 +23,14 @@ require_once 'controllers/AdminController.php';
 $error_message = $_SESSION['admin_error'] ?? "";
 unset($_SESSION['admin_error']); // Clear the error after displaying
 
-$email = ''; // To preserve the email input on error if logic changes
+$email = ''; 
 
-// Handle POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    
-    // Instantiate the Controller and handle login
-    // NOTE: This will fail if AdminController.php could not be loaded.
+
     $adminController = new AdminController();
     $adminController->handleLogin($email, $password); 
-    // AdminController::handleLogin should handle redirects/setting errors itself.
 }
 ?>
 
