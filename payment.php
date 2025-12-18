@@ -59,20 +59,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['finalize_payment'])) 
     }
 }
 
-// --- Payment and Booking Submission Handler (Final submission) ---
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['finalize_payment'])) {
-    // 1. Re-validate and sanitize data from hidden fields
     $schedule_id = (int)($_POST['schedule_id'] ?? 0);
     $total_amount = (float)($_POST['total_amount'] ?? 0);
     $selected_seats = array_filter(explode(',', $_POST['selected_seats'] ?? ''));
     $payment_method = $_POST['payment_method'] ?? '';
-    
-    // Quick validation before proceeding
+
     if ($schedule_id === 0 || $total_amount === 0 || empty($selected_seats)) {
         $error_message = "Missing critical booking data. Cannot finalize payment.";
     }
 
-    // Generate a temporary reference (used for SMS/email)
     $temp_reference = 'BBK-' . date('YmdHi') . '-' . substr(md5(mt_rand()), 0, 4);
 
     $payment_success = true;
