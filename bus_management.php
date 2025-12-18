@@ -30,15 +30,11 @@ $bus_id = $_GET['id'] ?? null;
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     
-    // NOTE: The BusController::createBus and BusController::updateBus MUST be ready to receive 
-    // the new fields: rows, columns, amenities.
-    
     if ($post_action == 'create') {
         $result = $busController->createBus($_POST);
     } elseif ($post_action == 'update') {
         $result = $busController->updateBus($_POST);
     } elseif ($post_action == 'delete') {
-        // Ensure bus_id is set for delete
         $result = $busController->deleteBus($_POST['bus_id'] ?? null);
     } else {
         $result = ['success' => false, 'message' => 'Invalid action specified.'];
@@ -47,9 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $message = $result['message'];
     $message_type = $result['success'] ? 'success' : 'error';
     
-    // Redirect to clear POST data and show message
     if ($result['success']) {
-        // Simple redirect to the list page after success
         header("Location: bus_management.php?msg=" . urlencode($message) . "&type=" . $message_type);
         exit;
     }
