@@ -1,19 +1,14 @@
 <?php
-// booking_management.php
 
-// 1. SESSION AND SECURITY CHECK
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Security Check: Ensure user is logged in AND is of type 'admin'
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-// 2. INCLUDES AND INITIALIZATION
-// Requires the dedicated Admin Booking Controller
 require_once 'controllers/BookingManagementController.php'; 
 
 $bookingController = new BookingManagementController();
@@ -23,8 +18,6 @@ if (!defined('CURRENCY_SYMBOL')) {
     define('CURRENCY_SYMBOL', 'RWF ');
 }
 
-
-// 3. HANDLE POST REQUESTS (UPDATE STATUS)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     $booking_id = $_POST['booking_id'] ?? null;
