@@ -88,7 +88,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['finalize_payment'])) {
             
             // --- SMS Notification Logic ---
             $user_details = $busModel->getUserDetails($user_id);
-            $trip_details = $busModel->getScheduleDetails($schedule_id); // Fetch basic trip details
+            $trip_details = $busModel->getScheduleDetails($schedule_id); 
             
             if ($user_details && $trip_details) {
                 $phone_number = $user_details['phone_number'] ?? null;
@@ -108,13 +108,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['finalize_payment'])) {
                         number_format($total_amount, 0)
                     );
                     
-                    // Send the simulated SMS
                     SmsService::sendSms($phone_number, $sms_message);
                 }
             }
-            // --- END SMS LOGIC ---
-
-            // 4. Redirect to Confirmation/Ticket Page
+        
             header("Location: confirmation.php?booking_id=" . $booking_id);
             exit;
         } else {
@@ -124,7 +121,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['finalize_payment'])) {
         $error_message = "Payment failed. Please try a different method or check your details.";
     }
     
-    // If the final payment failed, we re-fetch data for display
     if (!empty($error_message)) {
         $busController = new BusController();
         $trip = $busController->getScheduleDetailsWithSeats($schedule_id);
