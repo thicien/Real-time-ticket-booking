@@ -1,28 +1,22 @@
 <?php
-// admin_login.php
 
-// === DEBUGGING CODE: DELETE WHEN LIVE ===
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-// =======================================
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check if admin is already logged in
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && $_SESSION['user_type'] === 'admin') {
     header("Location: admin_dashboard.php");
     exit;
 }
 
-// Path: relative to admin_login.php, pointing to controllers/AdminController.php
 require_once 'controllers/AdminController.php';
 
 $error_message = $_SESSION['admin_error'] ?? "";
-unset($_SESSION['admin_error']); // Clear the error after displaying
-
+unset($_SESSION['admin_error']); 
 $email = ''; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
