@@ -1,20 +1,13 @@
 <?php
-// Start session
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Security Constant: This token secures the public QR link view.
-// !!! IMPORTANT: CHANGE THIS TO A LONG, COMPLEX STRING !!!
 const TICKET_VIEW_SECRET = 'your_long_and_secret_token_to_verify_qr_view'; 
 
-// --- FIX FOR LOCAL TESTING ---
-// 1. HARDCODED IP ADDRESS for QR Code generation (as requested).
-// This is your computer's local IP address, which your phone uses to access XAMPP.
 const LOCAL_HOST_IP = '192.168.137.1'; 
-
-
-// 2. Include Controller/Model 
+ 
 require_once 'models/Bus.php';
 $busModel = new Bus();
 
