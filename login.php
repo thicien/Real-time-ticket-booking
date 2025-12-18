@@ -12,16 +12,12 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check if user is already logged in and redirect 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    // Determine the correct dashboard path based on the session variable
     $redirect_path = $_SESSION['user_type'] === 'admin' ? 'admin_dashboard.php' : 'user_dashboard.php';
     header("Location: " . $redirect_path);
     exit;
 }
 
-// Include the necessary controller file
-// Path: relative to login.php, pointing to controllers/AuthController.php
 require_once 'controllers/AuthController.php'; 
 
 $error_message = "";
