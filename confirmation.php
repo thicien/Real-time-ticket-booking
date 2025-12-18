@@ -18,34 +18,22 @@ const LOCAL_HOST_IP = '192.168.137.1';
 require_once 'models/Bus.php';
 $busModel = new Bus();
 
-// Currency Constant
 const CURRENCY_SYMBOL = 'RWF ';
 
 $booking_id = $_GET['booking_id'] ?? null;
 $booking_details = null;
 $error_message = '';
 
-// --- NEW AUTHORIZATION LOGIC ---
-
-// Check for QR token in the URL
 $qr_token = $_GET['token'] ?? '';
 
-// Determines if the user is attempting to view the ticket via the public QR link
 $is_qr_view = (is_numeric($booking_id) && $qr_token === TICKET_VIEW_SECRET);
 
-// 1. Authorization Check
-// If the user is NOT logged in AND they are NOT using the secure QR link, redirect to login.
 if ((!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'user') && !$is_qr_view) {
     header("Location: login.php");
     exit;
 }
 
-// --- END NEW AUTHORIZATION LOGIC ---
-
-
-// Function to generate a simple reference/QR data
 function generate_ticket_reference($booking_id) {
-    // A simple, unique reference number for display purposes
     return 'BBK-' . date('Ymd') . '-' . str_pad($booking_id, 5, '0', STR_PAD_LEFT);
 }
 
