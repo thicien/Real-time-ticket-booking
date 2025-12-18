@@ -1,10 +1,9 @@
 <?php
-// Start session
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. Authorization Check
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'user') {
     header("Location: login.php");
     exit;
