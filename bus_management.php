@@ -1,32 +1,24 @@
 <?php
-// bus_management.php
 
-// 1. SESSION AND SECURITY CHECK
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Security Check: Ensure user is logged in AND is of type 'admin'
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
 
-// 2. INCLUDES AND INITIALIZATION
-// Ensure this path is correct for your BusController
 require_once 'controllers/BusController.php'; 
 
 $busController = new BusController();
 $message = '';
-$message_type = ''; // 'success' or 'error'
+$message_type = ''; 
 
-// Initialize bus data for the form (used for update/edit mode)
 $edit_bus = null;
 $action = $_GET['action'] ?? '';
 $bus_id = $_GET['id'] ?? null;
 
-
-// 3. HANDLE POST REQUESTS (CREATE, UPDATE, DELETE)
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $post_action = $_POST['action'] ?? '';
     
