@@ -49,13 +49,10 @@ function generate_ticket_reference($booking_id) {
     return 'BBK-' . date('Ymd') . '-' . str_pad($booking_id, 5, '0', STR_PAD_LEFT);
 }
 
-
-// 3. Fetch Booking Details
 if (is_numeric($booking_id)) {
-    // getBookingDetails MUST exist in Bus Model and return booking data + trip data + seats array
+
     $booking_details = $busModel->getBookingDetails((int)$booking_id); 
 
-    // Additional security check: If logged in, ensure the ticket belongs to the user.
     if (!$booking_details || (isset($_SESSION['user_id']) && $booking_details['user_id'] != $_SESSION['user_id'] && !$is_qr_view)) {
         $error_message = "Booking not found or access denied.";
     }
@@ -63,21 +60,15 @@ if (is_numeric($booking_id)) {
     $error_message = "Invalid booking reference.";
 }
 
-// 4. Prepare Data for Display and QR Code
 $ticket_reference = '';
 $qr_code_data_string = 'ERROR: No Booking Data'; 
 
 if ($booking_details) {
-    // 4a. Human-readable reference for display
+
     $ticket_reference = generate_ticket_reference($booking_details['booking_id']);
-    
-    // --- START QR CODE URL CONSTRUCTION (THE FIX) ---
-    
-    // 4b. Machine-readable, unique URL for QR code
-    
-    // Use the hardcoded IP for mobile access
+ 
     $host = LOCAL_HOST_IP; 
-    $protocol = "http://"; // Assuming XAMPP is running on HTTP
+    $protocol = "http://"; 
     
     $path = dirname($_SERVER['PHP_SELF']);
    
