@@ -25,26 +25,21 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
 require_once 'controllers/AuthController.php'; 
 
 $error_message = "";
-$email = ''; // To preserve the email input on error
+$email = '';
 
-
-// Handle POST request
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    
-    // Instantiate the Controller and handle login
-    // NOTE: This will fail if AuthController.php could not be loaded.
+
     $authController = new AuthController();
     
     $result = $authController->handleLogin($email, $password);
 
     if ($result['success']) {
-        // Login successful: redirect to dashboard
         header("Location: " . $result['redirect']);
         exit;
     } else {
-        // Login failed: set the error message
+    
         $error_message = $result['message'];
     }
 }
