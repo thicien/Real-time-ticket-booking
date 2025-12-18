@@ -9,45 +9,34 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     header("Location: login.php");
     exit;
 }
-
-// 2. Include Controller, Model, and Service
 require_once 'controllers/BusController.php';
 require_once 'models/Bus.php'; 
-require_once 'services/SmsService.php'; // Included for SMS notification
+require_once 'services/SmsService.php';
 
-$user_id = $_SESSION['user_id']; // Assuming user_id is stored in the session
+$user_id = $_SESSION['user_id'];
 $user_name = htmlspecialchars($_SESSION['name']);
 $error_message = '';
 $booking_data = [];
 
-// Currency Constant
 const CURRENCY_SYMBOL = 'RWF ';
 
-// 3. Process POST data from seat_selection.php (Initial load/display)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_POST['finalize_payment'])) {
     $schedule_id = $_POST['schedule_id'] ?? null;
     $price_per_seat = $_POST['price'] ?? null;
     $selected_seats_str = $_POST['selected_seats'] ?? '';
-    
-    // Convert selected seats string to array
     $selected_seats = array_filter(explode(',', $selected_seats_str));
     $total_seats = count($selected_seats);
     $total_amount = $total_seats * (float)$price_per_seat;
 
-    // Basic Validation
     if (!$schedule_id || $total_seats === 0 || $total_amount === 0) {
         $error_message = "Invalid booking details. Please go back and select seats.";
     } else {
-        // Fetch trip details for display
         $busController = new BusController();
-        // Assuming getScheduleDetailsWithSeats exists in BusController 
-        // and returns schedule details joined with bus info (rows/columns/etc.)
         $trip = $busController->getScheduleDetailsWithSeats((int)$schedule_id); 
 
         if (!$trip) {
             $error_message = "Trip not found.";
         } else {
-            // Prepare data for the view
             $booking_data = [
                 'schedule_id' => (int)$schedule_id,
                 'trip' => $trip,
