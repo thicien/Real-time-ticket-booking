@@ -55,28 +55,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// 4. HANDLE GET REQUESTS (MESSAGES, EDIT MODE)
 if (isset($_GET['msg']) && isset($_GET['type'])) {
     $message = htmlspecialchars($_GET['msg']);
     $message_type = htmlspecialchars($_GET['type']);
 }
 
-// Check for Edit Mode
 if ($action == 'edit' && $bus_id) {
-    // This calls the getBusById method we added to BusController
-    // NOTE: For edit mode to work, the BusController must fetch ALL columns: bus_plate, total_seats, rows, etc.
+
     $edit_bus = $busController->getBusById($bus_id); 
     if (!$edit_bus) {
         $message = "Bus record not found.";
         $message_type = 'error';
-        $action = ''; // Fallback to list view
+        $action = ''; 
     }
 }
 
-// 5. FETCH ALL BUSES FOR THE LIST VIEW
 $buses = $busController->index(); 
 
-// 6. Define Nav Items for Sidebar (copied from admin_dashboard)
 $admin_name = htmlspecialchars($_SESSION['name'] ?? 'Administrator');
 $nav_items = [
     'Route Management' => 'route_management.php',
@@ -96,7 +91,6 @@ $nav_items = [
     <title>Bus Management - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom Tailwind configuration based on your dashboard */
         .bg-primary-indigo { background-color: #4f46e5; }
         .text-primary-indigo { color: #4f46e5; }
         .border-primary-indigo { border-color: #4f46e5; }
