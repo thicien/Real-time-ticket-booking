@@ -75,18 +75,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['finalize_payment'])) {
     // Generate a temporary reference (used for SMS/email)
     $temp_reference = 'BBK-' . date('YmdHi') . '-' . substr(md5(mt_rand()), 0, 4);
 
-    // 2. Perform payment simulation (Placeholder)
-    $payment_success = true; // Assume success for now based on payment method selection
+    $payment_success = true;
 
     if ($payment_success && empty($error_message)) {
-        
-        // 3. Finalize Booking in Database
         $busModel = new Bus();
         $booking_id = $busModel->createBooking($user_id, $schedule_id, $total_amount, $selected_seats);
 
         if ($booking_id) {
             
-            // --- SMS Notification Logic ---
             $user_details = $busModel->getUserDetails($user_id);
             $trip_details = $busModel->getScheduleDetails($schedule_id); 
             
