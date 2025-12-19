@@ -193,8 +193,6 @@ class Bus {
         }
     }
 
-    // --- NEW METHOD for SMS Notification (Used by payment.php) ---
-
     /**
      * Fetches user details including the phone number.
      * @param int $userId
@@ -218,12 +216,10 @@ class Bus {
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
-            // Log error: echo "Error: " . $e->getMessage();
             return false;
         }
     }
 
-    // --- METHOD for Confirmation Page (Used by confirmation.php) ---
 
     /**
      * Fetches all details for a confirmed booking, including associated seats.
@@ -231,7 +227,6 @@ class Bus {
      * @return array|false Complete booking details or false if not found.
      */
     public function getBookingDetails($bookingId) {
-        // Query to fetch the main booking, schedule, route, and bus details
         $main_query = "
             SELECT
                 b.booking_id,
@@ -266,7 +261,6 @@ class Bus {
                 return false;
             }
 
-            // Query to fetch the specific seats for this booking
             $seats_query = "
                 SELECT
                     seat_number
@@ -280,18 +274,14 @@ class Bus {
             $seat_stmt->execute();
             $seats = $seat_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Add seats to the main booking array
             $booking['seats'] = $seats;
 
             return $booking;
 
         } catch(PDOException $e) {
-            // Log error: echo "Error: " . $e->getMessage();
             return false;
         }
     }
-
-    // --- METHOD FOR USER DASHBOARD (THE FIX FOR THE FATAL ERROR) ---
 
     /**
      * Fetches the detailed booking history for a given user.
@@ -330,7 +320,6 @@ class Bus {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         } catch(PDOException $e) {
-            // Log error: echo "Error: " . $e->getMessage();
             return [];
         }
     }
