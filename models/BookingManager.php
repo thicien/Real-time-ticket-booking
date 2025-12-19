@@ -1,9 +1,8 @@
 <?php
-// models/BookingManager.php (Admin Backend Model)
 
 require_once __DIR__ . '/../config/Database.php';
 
-class BookingManager { // Class name updated to BookingManager
+class BookingManager { 
     private $conn;
     private $table = "bookings";
 
@@ -72,7 +71,6 @@ class BookingManager { // Class name updated to BookingManager
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            // error_log("Booking Read All Error: " . $e->getMessage());
             return [];
         }
     }
