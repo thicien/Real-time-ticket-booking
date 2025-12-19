@@ -1,5 +1,4 @@
 <?php
-// models/Schedule.php
 
 require_once __DIR__ . '/../config/Database.php';
 
@@ -12,10 +11,8 @@ class Schedule {
         $this->conn = $database->connect();
     }
 
-    /**
-     * Fetches all available buses (Bus ID and Registration Number) for the dropdown.
-     * @return array
-     */
+     @return array
+     
     public function getAllBuses() {
         $query = "SELECT bus_id, registration_number, capacity FROM buses ORDER BY registration_number ASC";
         try {
