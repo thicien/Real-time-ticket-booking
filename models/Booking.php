@@ -1,5 +1,4 @@
 <?php
-// Include the Database connection class
 require_once __DIR__ . '/../config/Database.php';
 
 class Bus {
@@ -8,14 +7,10 @@ class Bus {
     private $schedules_table = "schedules";
     private $buses_table = "buses"; 
     
-    // Define table names for booking logic
     private $bookings_table = "bookings";
     private $booking_seats_table = "booking_seats";
-    private $users_table = "users"; // Added users table reference
+    private $users_table = "users";
 
-    /**
-     * Constructor - initializes database connection
-     */
     public function __construct() {
         $database = new Database();
         $this->conn = $database->connect();
@@ -68,12 +63,10 @@ class Bus {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
         } catch(PDOException $e) {
-            // Log error: echo "Error: " . $e->getMessage();
             return []; 
         }
     }
     
-    // --- Methods for Seat Selection (Used by BusController) ---
 
     /**
      * Fetches the detailed information for a single schedule ID.
@@ -112,7 +105,6 @@ class Bus {
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch(PDOException $e) {
-            // Log error: echo "Error: " . $e->getMessage();
             return false;
         }
     }
@@ -133,7 +125,7 @@ class Bus {
             WHERE
                 b.schedule_id = :schedule_id
             AND
-                b.status != 'Cancelled'"; // Exclude cancelled bookings
+                b.status != 'Cancelled'";
 
         try {
             $stmt = $this->conn->prepare($query);
@@ -143,12 +135,9 @@ class Bus {
             return $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 
         } catch(PDOException $e) {
-            // Log error: echo "Error: " . $e->getMessage();
             return [];
         }
     }
-    
-    // --- Method for Payment Finalization (Used by payment.php) ---
     
     /**
      * Creates a new booking and records the selected seats in the database.
