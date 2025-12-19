@@ -96,11 +96,10 @@ class Schedule {
         }
     }
 
-    /**
-     * Reads a single schedule record by ID.
-     * @param int $id The schedule_id.
-     * @return array|false Schedule record or false if not found.
-     */
+    
+      @param int 
+     @return array|false
+     
     public function readOne($id) {
         $query = "SELECT * FROM " . $this->table . " WHERE schedule_id = :schedule_id LIMIT 0,1";
         
@@ -114,11 +113,11 @@ class Schedule {
         }
     }
 
-    /**
-     * Updates an existing schedule record.
-     * @param array $data Contains schedule_id, bus_id, route_id, departure_time, status.
-     * @return bool True on success, false on failure.
-     */
+   
+   
+     @param array 
+     @return bool
+    
     public function update($data) {
         $query = "UPDATE " . $this->table . "
                   SET bus_id = :bus_id,
@@ -155,7 +154,6 @@ class Schedule {
             $stmt->bindParam(':schedule_id', $id, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $e) {
-            // Failure usually means the schedule is referenced by a booking (Foreign Key constraint)
             return false; 
         }
     }
