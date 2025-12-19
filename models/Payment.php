@@ -11,10 +11,9 @@ class Payment {
         $this->conn = $database->connect();
     }
 
-    /**
-     * Retrieves all payments with detailed information about the linked booking, schedule, and passenger.
-     * @return array
-     */
+    
+     @return array
+    
     public function readAll() {
         $query = "SELECT 
                     p.payment_id, 
