@@ -27,10 +27,8 @@ class Schedule {
         }
     }
 
-    /**
-     * Fetches all available routes (Route ID and Route Name) for the dropdown.
-     * @return array
-     */
+      @return array
+    
     public function getAllRoutes() {
         $query = "SELECT route_id, route_name FROM routes ORDER BY route_name ASC";
         try {
@@ -42,10 +40,9 @@ class Schedule {
         }
     }
 
-    /**
-     * Retrieves all schedules along with linked route and bus data.
-     * @return array Array of detailed schedule records.
-     */
+
+     * @return array Array
+     
     public function readAll() {
         $query = "SELECT 
                     s.schedule_id, 
@@ -67,16 +64,14 @@ class Schedule {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            // error_log("Schedule Read All Error: " . $e->getMessage());
             return [];
         }
     }
 
-    /**
-     * Creates a new schedule record.
-     * @param array $data Contains bus_id, route_id, departure_time, status.
-     * @return bool True on success, false on failure.
-     */
+    
+      @param array 
+      @return bool 
+  
     public function create($data) {
         $query = "INSERT INTO " . $this->table . " 
                   (bus_id, route_id, departure_time, status) 
