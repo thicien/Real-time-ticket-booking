@@ -153,10 +153,7 @@ class Bus {
         }
 
         try {
-            // Start Transaction to ensure atomicity
             $this->conn->beginTransaction();
-
-            // 1. Insert into the bookings table
             $booking_query = "
                 INSERT INTO " . $this->bookings_table . " (user_id, schedule_id, total_amount, status) 
                 VALUES (:user_id, :schedule_id, :total_amount, 'Confirmed')"; 
@@ -173,7 +170,6 @@ class Bus {
                 throw new PDOException("Failed to get booking ID.");
             }
 
-            // 2. Insert into the booking_seats table for each seat
             $seat_query = "
                 INSERT INTO " . $this->booking_seats_table . " (booking_id, seat_number) 
                 VALUES (:booking_id, :seat_number)";
@@ -185,17 +181,14 @@ class Bus {
                 $seat_stmt->execute();
             }
 
-            // Commit the transaction
             $this->conn->commit();
 
             return $booking_id;
 
         } catch(PDOException $e) {
-            // Rollback on any failure
             if ($this->conn->inTransaction()) {
                 $this->conn->rollBack();
             }
-            // Log error: echo "Error: " . $e->getMessage();
             return false;
         }
     }
