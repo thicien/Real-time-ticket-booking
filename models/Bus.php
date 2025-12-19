@@ -13,21 +13,16 @@ class Bus {
     private $users_table = "users";
 
     public function __construct() {
-        // Initialize the database connection
         $database = new Database();
         $this->conn = $database->connect();
     }
 
-    // --- Core Search Function (Used by search_results.php) ---
 
-    /**
-     * Searches for available bus schedules based on route and date.
-     * Calculates remaining seats for each schedule.
-     * * @param string $from Departure location.
-     * @param string $to Destination location.
-     * @param string $date Date of travel (Y-m-d).
-     * @return array|false List of matching schedules or false on error.
-     */
+     * * @param string $from
+     * @param string $to 
+     * @param string $date 
+     * @return array|false 
+
     public function searchSchedules($from, $to, $date) {
         $start_datetime = $date . ' 00:00:00';
         $end_datetime = $date . ' 23:59:59';
