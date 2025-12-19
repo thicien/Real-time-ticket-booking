@@ -75,7 +75,6 @@ class Admin {
             $query_revenue = "SELECT SUM(total_amount) FROM " . $this->bookings_table . " WHERE status = 'Confirmed'";
             $stats['Total Revenue'] = $this->conn->query($query_revenue)->fetchColumn() ?? 0;
             
-            // 3. Active Routes (Routes that have schedules in the future)
             $query_routes = "
                 SELECT COUNT(DISTINCT r.route_id) 
                 FROM " . $this->routes_table . " r
@@ -83,7 +82,6 @@ class Admin {
                 WHERE s.departure_time >= NOW()";
             $stats['Active Routes'] = $this->conn->query($query_routes)->fetchColumn();
             
-            // 4. Seat Occupancy
             $query_total_seats = "SELECT SUM(capacity) FROM " . $this->buses_table;
             $total_seats = $this->conn->query($query_total_seats)->fetchColumn();
 
